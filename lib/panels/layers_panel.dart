@@ -193,7 +193,7 @@ class _LayerItemState extends State<_LayerItem> {
         _menuItem('duplicate', Icons.copy, 'Duplicate'),
         _menuItem('front', Icons.flip_to_front, 'Bring to Front'),
         _menuItem('back', Icons.flip_to_back, 'Send to Back'),
-        const PopupMenuDivider<String>(),
+        const PopupMenuDivider(),
         _menuItem('delete', Icons.delete_outline, 'Delete',
             color: ForgeTheme.danger),
       ],

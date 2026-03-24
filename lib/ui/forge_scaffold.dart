@@ -11,6 +11,7 @@ import '../panels/code_export.dart';
 import '../panels/mini_preview.dart';
 import '../ui/theme.dart';
 import '../ui/keyboard_handler.dart';
+import '../core/models/widget_node.dart';
 
 class ForgeScaffold extends StatelessWidget {
   const ForgeScaffold({super.key});
