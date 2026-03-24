@@ -1,62 +1,67 @@
 import 'package:flutter/material.dart';
 
-// GAX Forge Pro Dark Theme — FlutterFlow inspired
 class ForgeTheme {
-  // ── Brand Colors ──────────────────────────────────────────
-  static const Color primary    = Color(0xFF6C63FF);   // Purple accent
-  static const Color secondary  = Color(0xFF03DAC6);   // Teal accent
-  static const Color danger     = Color(0xFFFF5370);   // Red
-  static const Color warning    = Color(0xFFFFCB6B);   // Yellow
-  static const Color success    = Color(0xFF89DDFF);   // Cyan
+  // ── Blue Brand (matching screenshot) ─────────────────────
+  static const Color primary       = Color(0xFF1976D2); // Material Blue 700
+  static const Color primaryLight  = Color(0xFF42A5F5); // Blue 400
+  static const Color primaryDark   = Color(0xFF0D47A1); // Blue 900
+  static const Color accent        = Color(0xFF2196F3); // Blue 500
+  static const Color fabColor      = Color(0xFF1565C0); // Blue 800
 
-  // ── Surface Colors ────────────────────────────────────────
-  static const Color bg         = Color(0xFF0E0E14);   // Deepest bg
-  static const Color surface1   = Color(0xFF13131A);   // Panel bg
-  static const Color surface2   = Color(0xFF1A1A25);   // Card bg
-  static const Color surface3   = Color(0xFF22222F);   // Elevated card
-  static const Color surface4   = Color(0xFF2A2A3A);   // Hover state
+  static const Color danger        = Color(0xFFE53935);
+  static const Color warning       = Color(0xFFFB8C00);
+  static const Color success       = Color(0xFF43A047);
+  static const Color secondary     = Color(0xFF78909C);
+
+  // ── Surfaces ──────────────────────────────────────────────
+  static const Color bg            = Color(0xFFF5F6FA);
+  static const Color surface1      = Color(0xFFFFFFFF);
+  static const Color surface2      = Color(0xFFF0F2F8);
+  static const Color surface3      = Color(0xFFE8EAF0);
+  static const Color surface4      = Color(0xFFDDE1EC);
 
   // ── Canvas ────────────────────────────────────────────────
-  static const Color canvasBg   = Color(0xFF080810);
-  static const Color canvasGrid = Color(0xFF1A1A28);
-  static const Color phoneBg    = Color(0xFFFFFFFF);
+  static const Color canvasBg      = Color(0xFFE8ECF4);
+  static const Color canvasGrid    = Color(0xFFCDD3E0);
+  static const Color phoneBg       = Color(0xFFFFFFFF);
 
   // ── Text ──────────────────────────────────────────────────
-  static const Color textPrimary   = Color(0xFFE8E8F0);
-  static const Color textSecondary = Color(0xFF8888A8);
-  static const Color textMuted     = Color(0xFF4A4A6A);
+  static const Color textPrimary   = Color(0xFF1A1A2E);
+  static const Color textSecondary = Color(0xFF5C6380);
+  static const Color textMuted     = Color(0xFF9BA3BF);
+  static const Color textOnPrimary = Color(0xFFFFFFFF);
 
   // ── Borders ───────────────────────────────────────────────
-  static const Color border     = Color(0xFF2A2A3E);
-  static const Color borderFocus= Color(0xFF6C63FF);
+  static const Color border        = Color(0xFFDDE1EC);
+  static const Color borderFocus   = Color(0xFF1976D2);
 
   // ── Selection ─────────────────────────────────────────────
-  static const Color selection  = Color(0xFF6C63FF);
-  static const Color selectionBg= Color(0x206C63FF);
-  static const Color handleColor= Color(0xFF6C63FF);
+  static const Color selection     = Color(0xFF1976D2);
+  static const Color selectionBg   = Color(0x201976D2);
+  static const Color handleColor   = Color(0xFF1976D2);
 
-  // ── Widget type colors (palette) ─────────────────────────
+  // ── Widget palette colors ─────────────────────────────────
   static const Map<String, Color> widgetColors = {
-    'Container'  : Color(0xFF6C63FF),
-    'Row'        : Color(0xFFFF9800),
-    'Column'     : Color(0xFF4CAF50),
-    'Stack'      : Color(0xFF00BCD4),
-    'Text'       : Color(0xFFE91E63),
-    'Image'      : Color(0xFF009688),
-    'Button'     : Color(0xFFF44336),
-    'IconButton' : Color(0xFFFF5722),
-    'TextField'  : Color(0xFF3F51B5),
-    'Card'       : Color(0xFF795548),
-    'Icon'       : Color(0xFFFFEB3B),
-    'Switch'     : Color(0xFF8BC34A),
-    'Slider'     : Color(0xFF9C27B0),
-    'Checkbox'   : Color(0xFF2196F3),
-    'Divider'    : Color(0xFF607D8B),
-    'ListTile'   : Color(0xFFFF9800),
-    'CircleAvatar': Color(0xFFE91E63),
-    'ListView'   : Color(0xFF795548),
-    'GridView'   : Color(0xFF009688),
-    'AppBar'     : Color(0xFF6C63FF),
+    'Container'   : Color(0xFF5C6BC0),
+    'Row'         : Color(0xFFFF7043),
+    'Column'      : Color(0xFF26A69A),
+    'Stack'       : Color(0xFF00ACC1),
+    'Text'        : Color(0xFF1976D2),
+    'Image'       : Color(0xFF2E7D32),
+    'Button'      : Color(0xFFE53935),
+    'IconButton'  : Color(0xFFFF5722),
+    'TextField'   : Color(0xFF3949AB),
+    'Card'        : Color(0xFF6D4C41),
+    'Icon'        : Color(0xFFF9A825),
+    'Switch'      : Color(0xFF558B2F),
+    'Slider'      : Color(0xFF7B1FA2),
+    'Checkbox'    : Color(0xFF1565C0),
+    'Divider'     : Color(0xFF546E7A),
+    'ListTile'    : Color(0xFFEF6C00),
+    'CircleAvatar': Color(0xFFAD1457),
+    'ListView'    : Color(0xFF4E342E),
+    'GridView'    : Color(0xFF00695C),
+    'AppBar'      : Color(0xFF1976D2),
   };
 
   static Color forWidget(String type) =>
@@ -64,37 +69,69 @@ class ForgeTheme {
 
   // ── ThemeData ─────────────────────────────────────────────
   static ThemeData get themeData => ThemeData(
-    brightness: Brightness.dark,
+    brightness: Brightness.light,
     scaffoldBackgroundColor: bg,
-    colorScheme: const ColorScheme.dark(
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: primary,
+      brightness: Brightness.light,
       primary: primary,
-      secondary: secondary,
-      surface: surface2,
-      error: danger,
+      secondary: accent,
+      surface: surface1,
     ),
     useMaterial3: true,
     fontFamily: 'Roboto',
-    dividerColor: border,
-    dividerTheme: const DividerThemeData(color: border, thickness: 1),
-    popupMenuTheme: const PopupMenuThemeData(color: surface2),
-    tooltipTheme: TooltipThemeData(
-      decoration: BoxDecoration(
-        color: surface3,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: border),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: primary,
+      foregroundColor: textOnPrimary,
+      elevation: 0,
+      centerTitle: false,
+      titleTextStyle: TextStyle(
+        color: textOnPrimary,
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.2,
       ),
-      textStyle: const TextStyle(color: textPrimary, fontSize: 12),
+      iconTheme: IconThemeData(color: textOnPrimary),
     ),
-    scrollbarTheme: ScrollbarThemeData(
-      thumbColor: WidgetStateProperty.all(surface4),
-      thickness: WidgetStateProperty.all(4),
+    dividerColor: border,
+    cardTheme: const CardThemeData(
+      color: surface1,
+      elevation: 2,
+      shadowColor: Color(0x20000000),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primary,
+        foregroundColor: textOnPrimary,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8)),
+      ),
+    ),
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: fabColor,
+      foregroundColor: textOnPrimary,
+      elevation: 4,
     ),
   );
 }
 
+// ── Color helpers ─────────────────────────────────────────────
+Color parseColor(dynamic hex, {Color fallback = Colors.transparent}) {
+  if (hex == null || hex.toString().isEmpty) return fallback;
+  try {
+    final s = hex.toString().replaceAll('#', '').trim();
+    if (s.length == 6) return Color(int.parse('FF$s', radix: 16));
+    if (s.length == 8) return Color(int.parse(s, radix: 16));
+  } catch (_) {}
+  return fallback;
+}
+
+String colorToHex(Color c) =>
+    '#${(c.value & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+
 // ── Reusable UI components ────────────────────────────────────
 
-// Panel section header
 class PanelHeader extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -112,25 +149,24 @@ class PanelHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: const BoxDecoration(
         color: ForgeTheme.surface1,
         border: Border(bottom: BorderSide(color: ForgeTheme.border)),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: iconColor ?? ForgeTheme.textSecondary),
+          Icon(icon, size: 15,
+              color: iconColor ?? ForgeTheme.textSecondary),
           const SizedBox(width: 8),
-          Text(
-            title,
-            style: const TextStyle(
-              color: ForgeTheme.textPrimary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.4,
-            ),
-          ),
+          Text(title,
+              style: const TextStyle(
+                color: ForgeTheme.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              )),
           const Spacer(),
           if (actions != null) ...actions!,
         ],
@@ -139,7 +175,6 @@ class PanelHeader extends StatelessWidget {
   }
 }
 
-// Compact icon button for panels
 class PanelIconBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -162,29 +197,26 @@ class PanelIconBtn extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        width: 28,
-        height: 28,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
-          color: active ? ForgeTheme.primary.withOpacity(0.2) : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Icon(
-          icon,
-          size: 15,
           color: active
-              ? ForgeTheme.primary
-              : (color ?? ForgeTheme.textSecondary),
+              ? ForgeTheme.primary.withOpacity(0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
         ),
+        child: Icon(icon, size: 17,
+            color: active
+                ? ForgeTheme.primary
+                : (color ?? ForgeTheme.textSecondary)),
       ),
     );
-    if (tooltip != null) {
-      return Tooltip(message: tooltip!, child: btn);
-    }
-    return btn;
+    return tooltip != null
+        ? Tooltip(message: tooltip!, child: btn)
+        : btn;
   }
 }
 
-// Dark text field for property editor
 class ForgePropField extends StatelessWidget {
   final String? label;
   final String? hint;
@@ -209,37 +241,38 @@ class ForgePropField extends StatelessWidget {
       controller: controller,
       onChanged: onChanged,
       keyboardType: keyboardType,
-      style: const TextStyle(color: ForgeTheme.textPrimary, fontSize: 12),
+      style: const TextStyle(
+          color: ForgeTheme.textPrimary, fontSize: 13),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
         labelStyle: const TextStyle(
-            color: ForgeTheme.textSecondary, fontSize: 11),
-        hintStyle:
-            const TextStyle(color: ForgeTheme.textMuted, fontSize: 12),
+            color: ForgeTheme.textSecondary, fontSize: 12),
+        hintStyle: const TextStyle(
+            color: ForgeTheme.textMuted, fontSize: 13),
         isDense: dense,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         filled: true,
-        fillColor: ForgeTheme.surface3,
+        fillColor: ForgeTheme.surface2,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: ForgeTheme.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: ForgeTheme.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: ForgeTheme.primary),
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(
+              color: ForgeTheme.primary, width: 2),
         ),
       ),
     );
   }
 }
 
-// Section label inside property editor
 class PropSectionLabel extends StatelessWidget {
   final String text;
   const PropSectionLabel(this.text, {super.key});
@@ -247,14 +280,13 @@ class PropSectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 14, bottom: 4, left: 2),
+      padding: const EdgeInsets.only(top: 18, bottom: 6, left: 2),
       child: Text(
-        text.toUpperCase(),
+        text,
         style: const TextStyle(
-          color: ForgeTheme.textMuted,
-          fontSize: 9,
+          color: ForgeTheme.textPrimary,
+          fontSize: 13,
           fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
         ),
       ),
     );

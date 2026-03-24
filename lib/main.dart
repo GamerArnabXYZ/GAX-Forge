@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'core/providers/forge_provider.dart';
 import 'ui/theme.dart';
-import 'ui/forge_scaffold.dart';
+import 'screens/dashboard_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,9 +14,9 @@ void main() {
   ]);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: ForgeTheme.bg,
-    systemNavigationBarIconBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.dark,
+    systemNavigationBarColor: Color(0xFFF5F6FA),
+    systemNavigationBarIconBrightness: Brightness.dark,
   ));
   runApp(const GAXForgeApp());
 }
@@ -32,7 +32,7 @@ class GAXForgeApp extends StatelessWidget {
         title: 'GAX Forge',
         debugShowCheckedModeBanner: false,
         theme: ForgeTheme.themeData,
-        home: const ForgeScaffold(),
+        home: const DashboardScreen(),
       ),
     );
   }
