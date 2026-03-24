@@ -5,11 +5,11 @@ import '../core/models/widget_node.dart';
 import '../ui/theme.dart';
 
 // Selection overlay — selected widget ke around border + resize handles
-class SelectionOverlay extends StatelessWidget {
+class ForgeSelectionOverlay extends StatelessWidget {
   final WidgetNode node;
   final double scale;
 
-  const SelectionOverlay({
+  const ForgeSelectionOverlay({
     super.key,
     required this.node,
     required this.scale,

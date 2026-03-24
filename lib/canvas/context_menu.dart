@@ -32,7 +32,7 @@ Future<void> showNodeContextMenu({
         enabled: false,
         height: 32,
         child: Row(children: [
-          Icon(node.type.icon,
+          Icon(node.type.widgetIcon,
               size: 13, color: ForgeTheme.forWidget(node.type.name)),
           const SizedBox(width: 8),
           Text(node.displayName,

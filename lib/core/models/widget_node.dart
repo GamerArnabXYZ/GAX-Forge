@@ -27,7 +27,7 @@ extension WTypeInfo on WType {
     return names[this] ?? 'Widget';
   }
 
-  IconData get icon {
+  IconData get widgetIcon {
     const icons = {
       WType.container: Icons.crop_square_rounded,
       WType.row: Icons.table_rows_outlined,

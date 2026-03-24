@@ -94,7 +94,7 @@ class _ChipBody extends StatelessWidget {
               color: color.withOpacity(0.15),
               borderRadius: BorderRadius.circular(5),
             ),
-            child: Icon(type.icon, color: color, size: 14),
+            child: Icon(type.widgetIcon, color: color, size: 14),
           ),
           const SizedBox(width: 7),
           Expanded(
@@ -146,7 +146,7 @@ class _DragFeedback extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(type.icon, color: Colors.white, size: 16),
+          Icon(type.widgetIcon, color: Colors.white, size: 16),
           const SizedBox(width: 8),
           Text(type.name,
               style: const TextStyle(

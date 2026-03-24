@@ -158,7 +158,7 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
 
                                 // Selection handles
                                 if (provider.selectedNode != null)
-                                  SelectionOverlay(
+                                  ForgeSelectionOverlay(
                                     node: provider.selectedNode!,
                                     scale: provider.canvasScale,
                                   ),

@@ -140,7 +140,7 @@ class _LayerItemState extends State<_LayerItem> {
               const SizedBox(width: 4),
 
               // Widget icon
-              Icon(n.type.icon, size: 14, color: color),
+              Icon(n.type.widgetIcon, size: 14, color: color),
               const SizedBox(width: 8),
 
               // Name
@@ -188,12 +188,12 @@ class _LayerItemState extends State<_LayerItem> {
       context: context,
       color: ForgeTheme.surface2,
       position: RelativeRect.fromLTRB(pos.dx, pos.dy, pos.dx + 200, pos.dy + 40),
-      items: [
+      items: <PopupMenuEntry<String>>[
         _menuItem('rename', Icons.edit, 'Rename'),
         _menuItem('duplicate', Icons.copy, 'Duplicate'),
         _menuItem('front', Icons.flip_to_front, 'Bring to Front'),
         _menuItem('back', Icons.flip_to_back, 'Send to Back'),
-        const PopupMenuDivider(),
+        const PopupMenuDivider<String>(),
         _menuItem('delete', Icons.delete_outline, 'Delete',
             color: ForgeTheme.danger),
       ],

@@ -248,6 +248,6 @@ class CommandHistory {
 extension CommandHistoryRecorder on CommandHistory {
   void record(ForgeCommand cmd) {
     _undoStack.add(cmd);
-    if (_undoStack.length > maxHistory) _undoStack.removeAt(0);
+    if (_undoStack.length > 50) _undoStack.removeAt(0);
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/forge_provider.dart';
-import '../core/models/widget_node.dart';
+import '../core/models/widget_node.dart' hide colorToHex;
 import '../ui/theme.dart';
 
 class PropertyPanel extends StatelessWidget {
@@ -121,7 +121,7 @@ class _PropertiesForm extends StatelessWidget {
           ],
           PropSectionLabel('Border'),
           _PropSlider('Border Width', 'borderWidth', node, provider, min: 0, max: 8),
-          if ((p['borderWidth'] as num?)?.toDouble() ?? 0 > 0)
+          if (((p['borderWidth'] as num?)?.toDouble() ?? 0) > 0)
             _ColorPropRow(context, 'Border Color', 'borderColor', node, provider),
           PropSectionLabel('Shadow'),
           _PropToggle('Shadow', 'shadowEnabled', node, provider),
@@ -757,7 +757,11 @@ class _ColorRowWidget extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              provider.updateProp(node.id, key_, colorToHex(currentColor));
+              final r = (currentColor.red).toRadixString(16).padLeft(2,'0');
+              final g = (currentColor.green).toRadixString(16).padLeft(2,'0');
+              final b = (currentColor.blue).toRadixString(16).padLeft(2,'0');
+              final hex = '#' + r + g + b;
+              provider.updateProp(node.id, key_, hex);
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(

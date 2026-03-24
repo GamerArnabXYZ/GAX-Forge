@@ -334,7 +334,7 @@ class _TopBar extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        provider.selectedNode!.type.icon,
+                        provider.selectedNode!.type.widgetIcon,
                         size: 12,
                         color: ForgeTheme.forWidget(
                             provider.selectedNode!.type.name),
