@@ -10,8 +10,6 @@ class ForgeProvider extends ChangeNotifier {
   List<ForgeScreen> _screens = [ForgeScreen.defaultHome()];
   int _currentScreenIndex = 0;
   String? _selectedNodeId;
-  bool _multiSelect = false;
-  Set<String> _multiSelected = {};
 
   // Canvas state
   double _canvasScale = 1.0;
@@ -20,35 +18,38 @@ class ForgeProvider extends ChangeNotifier {
   bool _snapToGrid = false;
   double _gridSize = 8.0;
 
+  // Preview lock — when true, canvas widgets are freely draggable/swipeable
+  bool _previewLocked = false;
+
   // Drag state
   bool _isDragging = false;
   String? _draggingId;
-  Offset? _dragStartPos;    // pointer start
-  Offset? _nodeStartPos;    // node x/y start
+  Offset? _dragStartPos;
+  Offset? _nodeStartPos;
 
   // Resize state
   bool _isResizing = false;
   String? _resizingId;
-  String? _resizeHandle;  // 'nw','n','ne','e','se','s','sw','w'
+  String? _resizeHandle;
   Offset? _resizeStartPointer;
   double? _resizeStartX, _resizeStartY, _resizeStartW, _resizeStartH;
 
   // Undo/redo
   final CommandHistory _history = CommandHistory();
 
-  // Panel visibility (mobile)
-  int _activeSidePanel = 0; // 0=layers, 1=palette, 2=props
+  // Panel (mobile)
+  int _activeSidePanel = 0;
 
-  ForgeProvider() {
-    _load();
-  }
+  // Current project id for saving
+  String? _currentProjectId;
+
+  ForgeProvider();
 
   // ── Getters ───────────────────────────────────────────────
   List<ForgeScreen> get screens => _screens;
   int get currentScreenIndex => _currentScreenIndex;
   ForgeScreen get currentScreen => _screens[_currentScreenIndex];
   String? get selectedNodeId => _selectedNodeId;
-  Set<String> get multiSelected => _multiSelected;
   double get canvasScale => _canvasScale;
   Offset get canvasOffset => _canvasOffset;
   bool get showGrid => _showGrid;
@@ -61,10 +62,52 @@ class ForgeProvider extends ChangeNotifier {
   String? get undoDesc => _history.undoDescription;
   String? get redoDesc => _history.redoDescription;
   int get activeSidePanel => _activeSidePanel;
+  bool get previewLocked => _previewLocked;
 
   WidgetNode? get selectedNode {
     if (_selectedNodeId == null) return null;
     return _findById(_selectedNodeId!, currentScreen.nodes);
+  }
+
+  // ── Load project from storage ─────────────────────────────
+  Future<void> loadProject(String projectId) async {
+    _currentProjectId = projectId;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = prefs.getString('gax_project_$projectId');
+      if (data != null) {
+        final list = jsonDecode(data) as List;
+        _screens = list
+            .map((s) => ForgeScreen.fromJson(s as Map<String, dynamic>))
+            .toList();
+        if (_screens.isEmpty) _screens = [ForgeScreen.defaultHome()];
+        _currentScreenIndex = 0;
+        _selectedNodeId = null;
+        _history.clear();
+        notifyListeners();
+        return;
+      }
+    } catch (e) {
+      debugPrint('Load project error: $e');
+    }
+    // New project — start fresh
+    _screens = [ForgeScreen.defaultHome()];
+    _currentScreenIndex = 0;
+    _selectedNodeId = null;
+    _history.clear();
+    notifyListeners();
+  }
+
+  // ── Save project to storage ───────────────────────────────
+  Future<void> saveProject() async {
+    if (_currentProjectId == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = jsonEncode(_screens.map((s) => s.toJson()).toList());
+      await prefs.setString('gax_project_$_currentProjectId', data);
+    } catch (e) {
+      debugPrint('Save project error: $e');
+    }
   }
 
   // ── Screen Operations ─────────────────────────────────────
@@ -79,7 +122,7 @@ class ForgeProvider extends ChangeNotifier {
     _screens.add(ForgeScreen(name: name ?? 'Screen$n'));
     _currentScreenIndex = _screens.length - 1;
     _selectedNodeId = null;
-    _save();
+    saveProject();
     notifyListeners();
   }
 
@@ -90,25 +133,24 @@ class ForgeProvider extends ChangeNotifier {
       _currentScreenIndex = _screens.length - 1;
     }
     _selectedNodeId = null;
-    _save();
+    saveProject();
     notifyListeners();
   }
 
   void renameScreen(int idx, String name) {
     _screens[idx].name = name;
-    _save();
+    saveProject();
     notifyListeners();
   }
 
   void updateScreenBg(String hex) {
     currentScreen.backgroundColor = hex;
-    _save();
+    saveProject();
     notifyListeners();
   }
 
   void toggleGrid() {
     _showGrid = !_showGrid;
-    currentScreen.showGrid = _showGrid;
     notifyListeners();
   }
 
@@ -117,21 +159,26 @@ class ForgeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Preview lock toggle ───────────────────────────────────
+  void togglePreviewLock() {
+    _previewLocked = !_previewLocked;
+    _selectedNodeId = null;
+    notifyListeners();
+  }
+
   // ── Selection ─────────────────────────────────────────────
   void selectNode(String? id) {
     _selectedNodeId = id;
-    _multiSelected.clear();
-    if (id != null) _activeSidePanel = 2; // open props
+    if (id != null) _activeSidePanel = 2;
     notifyListeners();
   }
 
   void clearSelection() {
     _selectedNodeId = null;
-    _multiSelected.clear();
     notifyListeners();
   }
 
-  // ── Add Node (via palette drop/tap) ──────────────────────
+  // ── Add Node ──────────────────────────────────────────────
   void addNode(WType type, {double x = 60, double y = 80}) {
     final snap = _snap(x, y);
     final node = WidgetNode(type: type, x: snap.dx, y: snap.dy);
@@ -139,7 +186,7 @@ class ForgeProvider extends ChangeNotifier {
     _history.execute(cmd, _screens, _currentScreenIndex);
     _selectedNodeId = node.id;
     _activeSidePanel = 2;
-    _save();
+    saveProject();
     notifyListeners();
   }
 
@@ -151,7 +198,7 @@ class ForgeProvider extends ChangeNotifier {
     final cmd = DeleteNodeCommand(node, idx);
     _history.execute(cmd, _screens, _currentScreenIndex);
     if (_selectedNodeId == id) _selectedNodeId = null;
-    _save();
+    saveProject();
     notifyListeners();
   }
 
@@ -164,20 +211,17 @@ class ForgeProvider extends ChangeNotifier {
     final orig = _findById(id, currentScreen.nodes);
     if (orig == null) return;
     final copy = orig.copyWith(
-      id: null,
-      x: orig.x + 20,
-      y: orig.y + 20,
+      id: null, x: orig.x + 20, y: orig.y + 20,
       props: Map.from(orig.props),
     );
     final cmd = AddNodeCommand(copy);
     _history.execute(cmd, _screens, _currentScreenIndex);
     _selectedNodeId = copy.id;
-    _save();
+    saveProject();
     notifyListeners();
   }
 
-  // ── Drag Operations ───────────────────────────────────────
-
+  // ── Drag ──────────────────────────────────────────────────
   void onDragStart(String id, Offset pointer) {
     final node = _findById(id, currentScreen.nodes);
     if (node == null || node.locked) return;
@@ -205,13 +249,12 @@ class ForgeProvider extends ChangeNotifier {
     final node = _findById(_draggingId!, currentScreen.nodes);
     if (node != null && _nodeStartPos != null) {
       if (node.x != _nodeStartPos!.dx || node.y != _nodeStartPos!.dy) {
-        // Record in history (already moved, just log)
         _history.record(MoveNodeCommand(
           nodeId: _draggingId!,
           oldX: _nodeStartPos!.dx, oldY: _nodeStartPos!.dy,
           newX: node.x, newY: node.y,
         ));
-        _save();
+        saveProject();
       }
     }
     _isDragging = false;
@@ -221,8 +264,7 @@ class ForgeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Resize Operations ─────────────────────────────────────
-
+  // ── Resize ────────────────────────────────────────────────
   void onResizeStart(String id, String handle, Offset pointer) {
     final node = _findById(id, currentScreen.nodes);
     if (node == null || node.locked) return;
@@ -240,15 +282,11 @@ class ForgeProvider extends ChangeNotifier {
     if (!_isResizing || _resizingId == null) return;
     final node = _findById(_resizingId!, currentScreen.nodes);
     if (node == null) return;
-
     final delta = (pointer - _resizeStartPointer!) / _canvasScale;
-    final dx = delta.dx;
-    final dy = delta.dy;
+    final dx = delta.dx; final dy = delta.dy;
     const minSize = 16.0;
-
     double nx = _resizeStartX!, ny = _resizeStartY!;
     double nw = _resizeStartW!, nh = _resizeStartH!;
-
     switch (_resizeHandle) {
       case 'se': nw = (nw + dx).clamp(minSize, 1000); nh = (nh + dy).clamp(minSize, 1000); break;
       case 'sw': nw = (nw - dx).clamp(minSize, 1000); nx = nx + dx; nh = (nh + dy).clamp(minSize, 1000); break;
@@ -259,9 +297,7 @@ class ForgeProvider extends ChangeNotifier {
       case 's': nh = (nh + dy).clamp(minSize, 1000); break;
       case 'n': nh = (nh - dy).clamp(minSize, 1000); ny = ny + dy; break;
     }
-
-    node.x = nx; node.y = ny;
-    node.width = nw; node.height = nh;
+    node.x = nx; node.y = ny; node.width = nw; node.height = nh;
     notifyListeners();
   }
 
@@ -273,15 +309,20 @@ class ForgeProvider extends ChangeNotifier {
         nodeId: _resizingId!,
         oldX: _resizeStartX!, oldY: _resizeStartY!,
         oldW: _resizeStartW!, oldH: _resizeStartH!,
-        newX: node.x, newY: node.y,
-        newW: node.width, newH: node.height,
+        newX: node.x, newY: node.y, newW: node.width, newH: node.height,
       ));
-      _save();
+      saveProject();
     }
-    _isResizing = false;
-    _resizingId = null;
-    _resizeHandle = null;
+    _isResizing = false; _resizingId = null; _resizeHandle = null;
     _resizeStartPointer = null;
+    notifyListeners();
+  }
+
+  // ── Snap position (from alignment guides) ────────────────
+  void applySnapPosition(String id, double x, double y) {
+    final node = _findById(id, currentScreen.nodes);
+    if (node == null) return;
+    node.x = x; node.y = y;
     notifyListeners();
   }
 
@@ -290,18 +331,9 @@ class ForgeProvider extends ChangeNotifier {
     final node = _findById(nodeId, currentScreen.nodes);
     if (node == null) return;
     final old = node.props[key];
-    final cmd = UpdatePropCommand(
-        nodeId: nodeId, key: key, oldVal: old, newVal: value);
+    final cmd = UpdatePropCommand(nodeId: nodeId, key: key, oldVal: old, newVal: value);
     _history.execute(cmd, _screens, _currentScreenIndex);
-    _save();
-    notifyListeners();
-  }
-
-  // Called by canvas during alignment-guided drag
-  void applySnapPosition(String id, double x, double y) {
-    final node = _findById(id, currentScreen.nodes);
-    if (node == null) return;
-    node.x = x; node.y = y;
+    saveProject();
     notifyListeners();
   }
 
@@ -310,7 +342,7 @@ class ForgeProvider extends ChangeNotifier {
     if (node == null) return;
     node.width = w.clamp(16, 1000);
     node.height = h.clamp(16, 1000);
-    _save();
+    saveProject();
     notifyListeners();
   }
 
@@ -318,7 +350,7 @@ class ForgeProvider extends ChangeNotifier {
     final node = _findById(id, currentScreen.nodes);
     if (node == null) return;
     node.x = x; node.y = y;
-    _save();
+    saveProject();
     notifyListeners();
   }
 
@@ -327,8 +359,7 @@ class ForgeProvider extends ChangeNotifier {
     final node = _findById(id, currentScreen.nodes);
     if (node == null) return;
     final cmd = UpdateNodeFieldCommand(
-        nodeId: id, field: 'visible',
-        oldVal: node.visible, newVal: !node.visible);
+        nodeId: id, field: 'visible', oldVal: node.visible, newVal: !node.visible);
     _history.execute(cmd, _screens, _currentScreenIndex);
     notifyListeners();
   }
@@ -337,8 +368,7 @@ class ForgeProvider extends ChangeNotifier {
     final node = _findById(id, currentScreen.nodes);
     if (node == null) return;
     final cmd = UpdateNodeFieldCommand(
-        nodeId: id, field: 'locked',
-        oldVal: node.locked, newVal: !node.locked);
+        nodeId: id, field: 'locked', oldVal: node.locked, newVal: !node.locked);
     _history.execute(cmd, _screens, _currentScreenIndex);
     notifyListeners();
   }
@@ -347,7 +377,7 @@ class ForgeProvider extends ChangeNotifier {
     final node = _findById(id, currentScreen.nodes);
     if (node == null) return;
     node.name = name.isEmpty ? null : name;
-    _save();
+    saveProject();
     notifyListeners();
   }
 
@@ -355,7 +385,7 @@ class ForgeProvider extends ChangeNotifier {
     final node = _findById(id, currentScreen.nodes);
     if (node == null) return;
     node.zIndex = currentScreen.nextZIndex;
-    _save();
+    saveProject();
     notifyListeners();
   }
 
@@ -363,9 +393,9 @@ class ForgeProvider extends ChangeNotifier {
     final node = _findById(id, currentScreen.nodes);
     if (node == null) return;
     final minZ = currentScreen.nodes.isEmpty
-        ? 0 : currentScreen.nodes.map((n) => n.zIndex).reduce((a,b) => a < b ? a : b);
+        ? 0 : currentScreen.nodes.map((n) => n.zIndex).reduce((a, b) => a < b ? a : b);
     node.zIndex = minZ - 1;
-    _save();
+    saveProject();
     notifyListeners();
   }
 
@@ -376,10 +406,9 @@ class ForgeProvider extends ChangeNotifier {
     final moved = nodes.removeAt(oldIdx);
     nodes.insert(newIdx, moved);
     for (int i = 0; i < nodes.length; i++) {
-      final n = _findById(nodes[i].id, currentScreen.nodes);
-      if (n != null) n.zIndex = i;
+      _findById(nodes[i].id, currentScreen.nodes)?.zIndex = i;
     }
-    _save();
+    saveProject();
     notifyListeners();
   }
 
@@ -403,14 +432,14 @@ class ForgeProvider extends ChangeNotifier {
   // ── Undo/Redo ─────────────────────────────────────────────
   void undo() {
     if (_history.undo(_screens, _currentScreenIndex)) {
-      _save();
+      saveProject();
       notifyListeners();
     }
   }
 
   void redo() {
     if (_history.redo(_screens, _currentScreenIndex)) {
-      _save();
+      saveProject();
       notifyListeners();
     }
   }
@@ -421,14 +450,13 @@ class ForgeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Clear ─────────────────────────────────────────────────
+  // ── Clear all (new project) ───────────────────────────────
   Future<void> clearAll() async {
     _screens = [ForgeScreen.defaultHome()];
     _currentScreenIndex = 0;
     _selectedNodeId = null;
+    _previewLocked = false;
     _history.clear();
-    final p = await SharedPreferences.getInstance();
-    await p.remove('gax_forge_v2');
     notifyListeners();
   }
 
@@ -448,33 +476,5 @@ class ForgeProvider extends ChangeNotifier {
       (x / _gridSize).round() * _gridSize,
       (y / _gridSize).round() * _gridSize,
     );
-  }
-
-  // ── Persistence ───────────────────────────────────────────
-  Future<void> _save() async {
-    try {
-      final p = await SharedPreferences.getInstance();
-      final data = jsonEncode(_screens.map((s) => s.toJson()).toList());
-      await p.setString('gax_forge_v2', data);
-    } catch (e) {
-      debugPrint('Save error: $e');
-    }
-  }
-
-  Future<void> _load() async {
-    try {
-      final p = await SharedPreferences.getInstance();
-      final data = p.getString('gax_forge_v2');
-      if (data != null) {
-        final list = jsonDecode(data) as List;
-        _screens = list.map((s) =>
-            ForgeScreen.fromJson(s as Map<String, dynamic>)).toList();
-        if (_screens.isEmpty) _screens = [ForgeScreen.defaultHome()];
-        notifyListeners();
-      }
-    } catch (e) {
-      debugPrint('Load error: $e');
-      _screens = [ForgeScreen.defaultHome()];
-    }
   }
 }
