@@ -9,7 +9,6 @@ import 'alignment_guides.dart';
 
 class ForgeCanvas extends StatefulWidget {
   const ForgeCanvas({super.key});
-
   @override
   State<ForgeCanvas> createState() => _ForgeCanvasState();
 }
@@ -36,12 +35,13 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
     return Consumer<ForgeProvider>(
       builder: (context, provider, _) {
         final screen = provider.currentScreen;
+        final locked = provider.previewLocked;
 
         return Container(
           color: ForgeTheme.canvasBg,
           child: Stack(
             children: [
-              // Grid
+              // Grid background
               if (provider.showGrid)
                 Positioned.fill(
                   child: _GridPainter(
@@ -49,13 +49,15 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                           .clamp(4.0, 64.0)),
                 ),
 
-              // InteractiveViewer
+              // InteractiveViewer — disabled when locked
               InteractiveViewer(
                 transformationController: _transformController,
                 boundaryMargin: const EdgeInsets.all(500),
                 minScale: 0.15,
                 maxScale: 5.0,
-                panEnabled: !provider.isDragging && !provider.isResizing,
+                // When locked: pan/zoom disabled — only widgets move
+                panEnabled: !locked && !provider.isDragging && !provider.isResizing,
+                scaleEnabled: !locked,
                 onInteractionUpdate: (_) {
                   provider.setCanvasScale(
                       _transformController.value.getMaxScaleOnAxis());
@@ -72,28 +74,20 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                       onAcceptWithDetails: (details) {
                         setState(() => _isDragOver = false);
                         final type = details.data;
-                        final box =
-                            context.findRenderObject() as RenderBox?;
+                        final box = context.findRenderObject() as RenderBox?;
                         if (box == null) {
                           provider.addNode(type,
                               x: screen.canvasWidth / 2 - 60,
                               y: screen.canvasHeight / 4);
                           return;
                         }
-                        final localDrop =
-                            box.globalToLocal(details.offset);
-                        final scale = _transformController.value
-                            .getMaxScaleOnAxis();
-                        final tx = _transformController.value
-                            .getTranslation();
-                        double cx =
-                            (localDrop.dx - tx.x) / scale - 48;
-                        double cy =
-                            (localDrop.dy - tx.y) / scale - 48;
-                        cx = cx.clamp(
-                            0, screen.canvasWidth - 100);
-                        cy = cy.clamp(
-                            0, screen.canvasHeight - 60);
+                        final localDrop = box.globalToLocal(details.offset);
+                        final scale = _transformController.value.getMaxScaleOnAxis();
+                        final tx = _transformController.value.getTranslation();
+                        double cx = (localDrop.dx - tx.x) / scale - 48;
+                        double cy = (localDrop.dy - tx.y) / scale - 48;
+                        cx = cx.clamp(0, screen.canvasWidth - 100);
+                        cy = cy.clamp(0, screen.canvasHeight - 60);
                         provider.addNode(type, x: cx, y: cy);
                       },
                       builder: (context, _, __) {
@@ -102,25 +96,20 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                           width: screen.canvasWidth,
                           height: screen.canvasHeight,
                           decoration: BoxDecoration(
-                            color: parseColor(
-                                screen.backgroundColor,
+                            color: parseColor(screen.backgroundColor,
                                 fallback: Colors.white),
                             boxShadow: [
                               BoxShadow(
                                 color: _isDragOver
-                                    ? ForgeTheme.primary
-                                        .withOpacity(0.4)
-                                    : Colors.black.withOpacity(0.5),
-                                blurRadius:
-                                    _isDragOver ? 60 : 40,
-                                spreadRadius:
-                                    _isDragOver ? 8 : 4,
+                                    ? ForgeTheme.primary.withOpacity(0.35)
+                                    : Colors.black.withOpacity(0.45),
+                                blurRadius: _isDragOver ? 60 : 40,
+                                spreadRadius: _isDragOver ? 8 : 4,
                               ),
                             ],
                             border: _isDragOver
                                 ? Border.all(
-                                    color: ForgeTheme.primary,
-                                    width: 2)
+                                    color: ForgeTheme.primary, width: 2)
                                 : null,
                           ),
                           child: GestureDetector(
@@ -129,14 +118,15 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                             child: Stack(
                               clipBehavior: Clip.hardEdge,
                               children: [
+                                // All visible nodes
                                 ...screen.sortedNodes
                                     .where((n) => n.visible)
                                     .map((n) => _CanvasNode(
                                           node: n,
                                           allNodes: screen.nodes,
-                                          onGuideUpdate: (g) =>
-                                              setState(
-                                                  () => _activeGuides = g),
+                                          locked: locked,
+                                          onGuideUpdate: (g) => setState(
+                                              () => _activeGuides = g),
                                           onDragEnd: () => setState(
                                               () => _activeGuides = []),
                                         )),
@@ -146,18 +136,15 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                                   Positioned.fill(
                                     child: IgnorePointer(
                                       child: AlignmentGuidePainter(
-                                        guides:
-                                            _activeGuides,
-                                        canvasWidth:
-                                            screen.canvasWidth,
-                                        canvasHeight:
-                                            screen.canvasHeight,
+                                        guides: _activeGuides,
+                                        canvasWidth: screen.canvasWidth,
+                                        canvasHeight: screen.canvasHeight,
                                       ),
                                     ),
                                   ),
 
-                                // Selection handles
-                                if (provider.selectedNode != null)
+                                // Selection handles — only when not locked
+                                if (!locked && provider.selectedNode != null)
                                   ForgeSelectionOverlay(
                                     node: provider.selectedNode!,
                                     scale: provider.canvasScale,
@@ -167,22 +154,17 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                                 if (_isDragOver)
                                   Center(
                                     child: Container(
-                                      padding: const EdgeInsets
-                                          .symmetric(
-                                              horizontal: 16,
-                                              vertical: 8),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
                                       decoration: BoxDecoration(
-                                        color: ForgeTheme.primary
-                                            .withOpacity(0.9),
-                                        borderRadius:
-                                            BorderRadius.circular(8),
+                                        color: ForgeTheme.primary.withOpacity(0.9),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Text('Drop here',
                                           style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 13,
-                                              fontWeight:
-                                                  FontWeight.w600)),
+                                              fontWeight: FontWeight.w600)),
                                     ),
                                   ),
                               ],
@@ -195,15 +177,19 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                 ),
               ),
 
+              // Info bar
               Positioned(
                 bottom: 10, left: 10,
                 child: _CanvasInfoBar(provider: provider),
               ),
-              Positioned(
-                bottom: 10, right: 10,
-                child: _ZoomControls(
-                    provider: provider, ctrl: _transformController),
-              ),
+
+              // Zoom controls — hidden when locked
+              if (!locked)
+                Positioned(
+                  bottom: 10, right: 10,
+                  child: _ZoomControls(
+                      provider: provider, ctrl: _transformController),
+                ),
             ],
           ),
         );
@@ -212,16 +198,18 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
   }
 }
 
-// ── Canvas node ───────────────────────────────────────────────
+// ── Canvas Node — always draggable (lock or not) ──────────────
 class _CanvasNode extends StatelessWidget {
   final WidgetNode node;
   final List<WidgetNode> allNodes;
+  final bool locked; // canvas lock state
   final ValueChanged<List<Guide>> onGuideUpdate;
   final VoidCallback onDragEnd;
 
   const _CanvasNode({
     required this.node,
     required this.allNodes,
+    required this.locked,
     required this.onGuideUpdate,
     required this.onDragEnd,
   });
@@ -235,7 +223,11 @@ class _CanvasNode extends StatelessWidget {
       left: node.x, top: node.y,
       width: node.width, height: node.height,
       child: GestureDetector(
-        onTap: () { if (!node.locked) provider.selectNode(node.id); },
+        // Tap to select (only in edit mode)
+        onTap: () {
+          if (!locked && !node.locked) provider.selectNode(node.id);
+        },
+        // Long press then drag — works in BOTH modes
         onPanStart: (d) {
           if (node.locked) return;
           provider.onDragStart(node.id, d.globalPosition);
@@ -257,11 +249,16 @@ class _CanvasNode extends StatelessWidget {
             }
           }
         },
-        onPanEnd: (_) { provider.onDragEnd(); onDragEnd(); },
+        onPanEnd: (_) {
+          provider.onDragEnd();
+          onDragEnd();
+        },
         child: Stack(
           clipBehavior: Clip.none,
           children: [
             IgnorePointer(child: WidgetRenderer(node: node)),
+
+            // Locked node badge
             if (node.locked)
               Positioned(
                 top: 2, right: 2,
@@ -274,7 +271,9 @@ class _CanvasNode extends StatelessWidget {
                       color: Colors.white, size: 10),
                 ),
               ),
-            if (isSelected)
+
+            // Selection ring (edit mode only)
+            if (isSelected && !locked)
               Positioned.fill(
                 child: IgnorePointer(
                   child: DecoratedBox(
@@ -296,7 +295,6 @@ class _CanvasNode extends StatelessWidget {
 class _GridPainter extends StatelessWidget {
   final double size;
   const _GridPainter({required this.size});
-
   @override
   Widget build(BuildContext context) =>
       CustomPaint(painter: _GridCP(size));
@@ -305,47 +303,39 @@ class _GridPainter extends StatelessWidget {
 class _GridCP extends CustomPainter {
   final double size;
   _GridCP(this.size);
-
   @override
   void paint(Canvas c, Size s) {
     final p = Paint()
       ..color = ForgeTheme.canvasGrid
       ..strokeWidth = 0.5;
-    for (double x = 0; x < s.width; x += size) {
+    for (double x = 0; x < s.width; x += size)
       c.drawLine(Offset(x, 0), Offset(x, s.height), p);
-    }
-    for (double y = 0; y < s.height; y += size) {
+    for (double y = 0; y < s.height; y += size)
       c.drawLine(Offset(0, y), Offset(s.width, y), p);
-    }
   }
-
   @override
   bool shouldRepaint(covariant _GridCP old) => old.size != size;
 }
 
-// ── Canvas info bar ───────────────────────────────────────────
+// ── Info bar ──────────────────────────────────────────────────
 class _CanvasInfoBar extends StatelessWidget {
   final ForgeProvider provider;
   const _CanvasInfoBar({required this.provider});
-
   @override
   Widget build(BuildContext context) {
     final node = provider.selectedNode;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: ForgeTheme.surface2.withOpacity(0.92),
+        color: Colors.black.withOpacity(0.55),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: ForgeTheme.border),
       ),
       child: Text(
         node != null
             ? '${node.displayName}  x:${node.x.round()}  y:${node.y.round()}  ${node.width.round()}×${node.height.round()}'
             : '${provider.currentScreen.name}  ·  ${provider.currentScreen.nodes.length} widgets',
         style: const TextStyle(
-            color: ForgeTheme.textSecondary,
-            fontSize: 10,
-            fontFamily: 'monospace'),
+            color: Colors.white, fontSize: 10, fontFamily: 'monospace'),
       ),
     );
   }
@@ -373,9 +363,8 @@ class _ZoomControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: ForgeTheme.surface2.withOpacity(0.92),
+        color: Colors.black.withOpacity(0.55),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: ForgeTheme.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -384,17 +373,15 @@ class _ZoomControls extends StatelessWidget {
           InkWell(
             onTap: _reset,
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: Text(
                 '${(provider.canvasScale * 100).round()}%',
-                style: const TextStyle(
-                    color: ForgeTheme.textSecondary, fontSize: 11),
+                style: const TextStyle(color: Colors.white, fontSize: 11),
               ),
             ),
           ),
           _ZBtn(Icons.add, () => _zoom(1.25)),
-          _ZBtn(Icons.fit_screen_rounded, _reset, tooltip: 'Reset view'),
+          _ZBtn(Icons.fit_screen_rounded, _reset, tooltip: 'Reset'),
         ],
       ),
     );
@@ -406,20 +393,15 @@ class _ZBtn extends StatelessWidget {
   final VoidCallback onTap;
   final String? tooltip;
   const _ZBtn(this.icon, this.onTap, {this.tooltip});
-
   @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: Tooltip(
-        message: tooltip ?? '',
-        child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: Icon(icon,
-              size: 14, color: ForgeTheme.textSecondary),
-        ),
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Tooltip(
+      message: tooltip ?? '',
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(icon, size: 14, color: Colors.white),
       ),
-    );
-  }
+    ),
+  );
 }

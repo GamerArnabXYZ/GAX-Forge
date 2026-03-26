@@ -55,45 +55,44 @@ class _BuilderAppBar extends StatelessWidget implements PreferredSizeWidget {
             IconButton(
               icon: Icon(Icons.grid_on_outlined,
                   color: provider.showGrid
-                      ? Colors.white : Colors.white54,
-                  size: 20),
-              tooltip: 'Grid',
+                      ? Colors.white : Colors.white54, size: 20),
+              tooltip: 'Toggle Grid',
               onPressed: provider.toggleGrid,
             ),
             // Undo
             IconButton(
               icon: Icon(Icons.undo_rounded,
                   color: provider.canUndo
-                      ? Colors.white : Colors.white30,
-                  size: 20),
-              tooltip: 'Undo',
+                      ? Colors.white : Colors.white30, size: 20),
               onPressed: provider.canUndo ? provider.undo : null,
             ),
             // Redo
             IconButton(
               icon: Icon(Icons.redo_rounded,
                   color: provider.canRedo
-                      ? Colors.white : Colors.white30,
-                  size: 20),
-              tooltip: 'Redo',
+                      ? Colors.white : Colors.white30, size: 20),
               onPressed: provider.canRedo ? provider.redo : null,
             ),
-            // Preview lock
-            IconButton(
-              icon: Icon(
-                provider.previewLocked
-                    ? Icons.lock_rounded
-                    : Icons.lock_open_rounded,
-                color: provider.previewLocked
-                    ? Colors.yellowAccent : Colors.white54,
-                size: 20,
+
+            // 🔒 Lock button — locks canvas pan/zoom, widgets stay draggable
+            Tooltip(
+              message: provider.previewLocked
+                  ? 'Canvas locked — tap to unlock'
+                  : 'Lock canvas (widgets still moveable)',
+              child: IconButton(
+                icon: Icon(
+                  provider.previewLocked
+                      ? Icons.lock_rounded
+                      : Icons.lock_open_rounded,
+                  color: provider.previewLocked
+                      ? Colors.yellowAccent : Colors.white54,
+                  size: 22,
+                ),
+                onPressed: provider.togglePreviewLock,
               ),
-              tooltip: provider.previewLocked
-                  ? 'Preview Locked — tap to edit'
-                  : 'Lock for preview',
-              onPressed: provider.togglePreviewLock,
             ),
-            // Save button
+
+            // Save
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: TextButton.icon(
@@ -102,8 +101,12 @@ class _BuilderAppBar extends StatelessWidget implements PreferredSizeWidget {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('✅ Project saved!'),
-                        duration: Duration(seconds: 1),
+                        content: Row(children: [
+                          Icon(Icons.check_circle, color: Colors.white, size: 16),
+                          SizedBox(width: 8),
+                          Text('Saved!'),
+                        ]),
+                        duration: Duration(milliseconds: 1200),
                         backgroundColor: ForgeTheme.success,
                         behavior: SnackBarBehavior.floating,
                       ),
@@ -111,11 +114,11 @@ class _BuilderAppBar extends StatelessWidget implements PreferredSizeWidget {
                   }
                 },
                 icon: const Icon(Icons.save_rounded,
-                    color: Colors.white, size: 18),
+                    color: Colors.white, size: 17),
                 label: const Text('Save',
                     style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700)),
+                        color: Colors.white, fontWeight: FontWeight.w700,
+                        fontSize: 13)),
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.white.withOpacity(0.18),
                   shape: RoundedRectangleBorder(
@@ -152,74 +155,71 @@ class _WideLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<ForgeProvider>(
-      builder: (context, provider, _) {
-        // When preview locked — full canvas, no sidebars
-        if (provider.previewLocked) {
-          return const _PreviewLockedCanvas();
-        }
-        return Column(
-          children: [
-            const ScreenTabBar(),
-            Expanded(
-              child: Row(
-                children: [
-                  const SizedBox(width: 72, child: _VerticalPalette()),
-                  Container(width: 1, color: ForgeTheme.border),
-                  const Expanded(child: ForgeCanvas()),
-                  Container(width: 1, color: ForgeTheme.border),
-                  const SizedBox(width: 280, child: PropertyPanel()),
-                ],
-              ),
+      builder: (context, provider, _) => Column(
+        children: [
+          const ScreenTabBar(),
+          // Lock banner
+          if (provider.previewLocked)
+            _LockBanner(onUnlock: provider.togglePreviewLock),
+          Expanded(
+            child: Row(
+              children: [
+                const SizedBox(width: 72, child: _VerticalPalette()),
+                Container(width: 1, color: ForgeTheme.border),
+                const Expanded(child: ForgeCanvas()),
+                Container(width: 1, color: ForgeTheme.border),
+                const SizedBox(width: 280, child: PropertyPanel()),
+              ],
             ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 }
 
-// ── Preview Locked Canvas ─────────────────────────────────────
-// Full-screen swipeable/moveable canvas, no UI chrome
-class _PreviewLockedCanvas extends StatelessWidget {
-  const _PreviewLockedCanvas();
+// ── Lock Banner ───────────────────────────────────────────────
+class _LockBanner extends StatelessWidget {
+  final VoidCallback onUnlock;
+  const _LockBanner({required this.onUnlock});
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const ForgeCanvas(),
-        // Small lock banner at top
-        Positioned(
-          top: 0, left: 0, right: 0,
-          child: Container(
-            color: Colors.black.withOpacity(0.6),
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 6),
-            child: Row(
-              children: [
-                const Icon(Icons.lock_rounded,
-                    color: Colors.yellowAccent, size: 14),
-                const SizedBox(width: 8),
-                const Text('Preview Mode — widgets moveable',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600)),
-                const Spacer(),
-                GestureDetector(
-                  onTap: () =>
-                      context.read<ForgeProvider>().togglePreviewLock(),
-                  child: const Text('Exit',
-                      style: TextStyle(
-                          color: Colors.yellowAccent,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700)),
-                ),
-              ],
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFF1A1A2E),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: Row(
+        children: [
+          const Icon(Icons.lock_rounded,
+              color: Colors.yellowAccent, size: 14),
+          const SizedBox(width: 8),
+          const Text(
+            'Canvas Locked — pan/zoom off, widgets freely draggable',
+            style: TextStyle(
+                color: Colors.white70, fontSize: 11),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: onUnlock,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.yellowAccent.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                    color: Colors.yellowAccent.withOpacity(0.5)),
+              ),
+              child: const Text('Unlock',
+                  style: TextStyle(
+                      color: Colors.yellowAccent,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700)),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -275,8 +275,7 @@ class _VerticalPalette extends StatelessWidget {
                   SizedBox(height: 2),
                   Text('More',
                       style: TextStyle(
-                          fontSize: 8,
-                          color: ForgeTheme.primary,
+                          fontSize: 8, color: ForgeTheme.primary,
                           fontWeight: FontWeight.w700)),
                 ],
               ),
@@ -295,7 +294,7 @@ class _VerticalPalette extends StatelessWidget {
       builder: (_) => ChangeNotifierProvider.value(
         value: context.read<ForgeProvider>(),
         child: DraggableScrollableSheet(
-          initialChildSize: 0.7,
+          initialChildSize: 0.75,
           maxChildSize: 0.95,
           minChildSize: 0.4,
           builder: (_, __) => Container(
@@ -304,24 +303,7 @@ class _VerticalPalette extends StatelessWidget {
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(16)),
             ),
-            child: Column(
-              children: [
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  width: 36, height: 4,
-                  decoration: BoxDecoration(
-                      color: ForgeTheme.border,
-                      borderRadius: BorderRadius.circular(2)),
-                ),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Text('All Widgets',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700)),
-                ),
-                const Expanded(child: WidgetPalette()),
-              ],
-            ),
+            child: const WidgetPalette(),
           ),
         ),
       ),
@@ -343,18 +325,14 @@ class _PaletteIconBtn extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Column(
-          children: [
-            Icon(icon, size: 24, color: ForgeTheme.textSecondary),
-            const SizedBox(height: 3),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 8,
-                    color: ForgeTheme.textMuted,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3)),
-          ],
-        ),
+        child: Column(children: [
+          Icon(icon, size: 24, color: ForgeTheme.textSecondary),
+          const SizedBox(height: 3),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 8, color: ForgeTheme.textMuted,
+                  fontWeight: FontWeight.w700, letterSpacing: 0.3)),
+        ]),
       ),
     );
   }
@@ -367,28 +345,24 @@ class _MobileLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<ForgeProvider>(
-      builder: (context, provider, _) {
-        // Preview locked = full canvas
-        if (provider.previewLocked) {
-          return const _PreviewLockedCanvas();
-        }
-        return Column(
-          children: [
-            const ScreenTabBar(),
-            Expanded(
-              child: IndexedStack(
-                index: provider.activeSidePanel,
-                children: const [
-                  ForgeCanvas(),
-                  WidgetPalette(),
-                  PropertyPanel(),
-                ],
-              ),
+      builder: (context, provider, _) => Column(
+        children: [
+          const ScreenTabBar(),
+          if (provider.previewLocked)
+            _LockBanner(onUnlock: provider.togglePreviewLock),
+          Expanded(
+            child: IndexedStack(
+              index: provider.activeSidePanel,
+              children: const [
+                ForgeCanvas(),
+                WidgetPalette(),
+                PropertyPanel(),
+              ],
             ),
-            _MobileBottomNav(active: provider.activeSidePanel),
-          ],
-        );
-      },
+          ),
+          _MobileBottomNav(active: provider.activeSidePanel),
+        ],
+      ),
     );
   }
 }
@@ -405,16 +379,11 @@ class _MobileBottomNav extends StatelessWidget {
         color: ForgeTheme.surface1,
         border: Border(top: BorderSide(color: ForgeTheme.border)),
       ),
-      child: Row(
-        children: [
-          _BottomBtn(0, Icons.phone_android_outlined, 'Canvas',
-              active, provider),
-          _BottomBtn(1, Icons.widgets_outlined, 'Widgets',
-              active, provider),
-          _BottomBtn(2, Icons.tune_rounded, 'Properties',
-              active, provider),
-        ],
-      ),
+      child: Row(children: [
+        _BottomBtn(0, Icons.phone_android_outlined, 'Canvas', active, provider),
+        _BottomBtn(1, Icons.widgets_outlined, 'Widgets', active, provider),
+        _BottomBtn(2, Icons.tune_rounded, 'Properties', active, provider),
+      ]),
     );
   }
 }
@@ -425,8 +394,7 @@ class _BottomBtn extends StatelessWidget {
   final String label;
   final int active;
   final ForgeProvider provider;
-  const _BottomBtn(this.index, this.icon, this.label,
-      this.active, this.provider);
+  const _BottomBtn(this.index, this.icon, this.label, this.active, this.provider);
 
   @override
   Widget build(BuildContext context) {
@@ -437,30 +405,20 @@ class _BottomBtn extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            border: Border(
-                top: BorderSide(
-                    color: isActive
-                        ? ForgeTheme.primary : Colors.transparent,
-                    width: 2)),
+            border: Border(top: BorderSide(
+                color: isActive ? ForgeTheme.primary : Colors.transparent,
+                width: 2)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon,
-                  size: 20,
-                  color: isActive
-                      ? ForgeTheme.primary : ForgeTheme.textMuted),
-              const SizedBox(height: 2),
-              Text(label,
-                  style: TextStyle(
-                    color: isActive
-                        ? ForgeTheme.primary : ForgeTheme.textMuted,
-                    fontSize: 10,
-                    fontWeight: isActive
-                        ? FontWeight.w700 : FontWeight.normal,
-                  )),
-            ],
-          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 20,
+                color: isActive ? ForgeTheme.primary : ForgeTheme.textMuted),
+            const SizedBox(height: 2),
+            Text(label, style: TextStyle(
+              color: isActive ? ForgeTheme.primary : ForgeTheme.textMuted,
+              fontSize: 10,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.normal,
+            )),
+          ]),
         ),
       ),
     );
