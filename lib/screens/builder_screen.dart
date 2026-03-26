@@ -141,17 +141,20 @@ class _VerticalPalette extends StatelessWidget {
         children: [
           const SizedBox(height: 8),
           // Quick add buttons — screenshot style
-          ..._quickWidgets.map((item) => _PaletteIconBtn(
-            icon: item.$1,
-            label: item.$2,
-            onTap: () {
-              final provider = context.read<ForgeProvider>();
-              final screen = provider.currentScreen;
-              provider.addNode(item.$3,
-                  x: screen.canvasWidth / 2 - 60,
-                  y: screen.canvasHeight / 4 + (_quickWidgets.indexOf(item) * 60));
-            },
-          )),
+          ...List.generate(_quickWidgets.length, (idx) {
+            final item = _quickWidgets[idx];
+            return _PaletteIconBtn(
+              icon: item.$1,
+              label: item.$2,
+              onTap: () {
+                final provider = context.read<ForgeProvider>();
+                final screen = provider.currentScreen;
+                provider.addNode(item.$3,
+                    x: screen.canvasWidth / 2 - 60,
+                    y: 80.0 + (idx * 60.0));
+              },
+            );
+          }),
           const Spacer(),
           // More widgets button
           GestureDetector(

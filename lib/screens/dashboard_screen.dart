@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core/models/project_model.dart';
 import '../core/providers/forge_provider.dart';
 import '../ui/theme.dart';
+import '../core/models/widget_node.dart' show parseColor;
 import 'builder_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
