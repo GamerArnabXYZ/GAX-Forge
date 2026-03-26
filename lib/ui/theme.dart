@@ -94,7 +94,7 @@ class ForgeTheme {
       iconTheme: IconThemeData(color: textOnPrimary),
     ),
     dividerColor: border,
-    cardTheme: const CardThemeData(
+    cardTheme: const CardTheme(
       color: surface1,
       elevation: 2,
       shadowColor: Color(0x20000000),
@@ -116,19 +116,6 @@ class ForgeTheme {
   );
 }
 
-// ── Color helpers ─────────────────────────────────────────────
-Color parseColor(dynamic hex, {Color fallback = Colors.transparent}) {
-  if (hex == null || hex.toString().isEmpty) return fallback;
-  try {
-    final s = hex.toString().replaceAll('#', '').trim();
-    if (s.length == 6) return Color(int.parse('FF$s', radix: 16));
-    if (s.length == 8) return Color(int.parse(s, radix: 16));
-  } catch (_) {}
-  return fallback;
-}
-
-String colorToHex(Color c) =>
-    '#${(c.value & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
 // ── Reusable UI components ────────────────────────────────────
 
