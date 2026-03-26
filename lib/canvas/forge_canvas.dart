@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/forge_provider.dart';
 import '../core/models/widget_node.dart';
@@ -14,20 +15,30 @@ class ForgeCanvas extends StatefulWidget {
 }
 
 class _ForgeCanvasState extends State<ForgeCanvas> {
-  late TransformationController _transformController;
+  final TransformationController _tc = TransformationController();
   bool _isDragOver = false;
   List<Guide> _activeGuides = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _transformController = TransformationController();
-  }
+  // Active drag tracking (bypass InteractiveViewer)
+  String? _activeDragId;
+  Offset? _pointerStartGlobal;
+  Offset? _nodeStartLocal; // node x,y in canvas coords at drag start
 
   @override
   void dispose() {
-    _transformController.dispose();
+    _tc.dispose();
     super.dispose();
+  }
+
+  // Convert global screen position → canvas local position
+  Offset _globalToCanvas(Offset global) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return global;
+    final local = box.globalToLocal(global);
+    final inv = Matrix4.inverted(_tc.value);
+    final vec = inv.transform3(Vector3(local.dx, local.dy, 0));
+    // subtract the 48px padding inside InteractiveViewer's Center+Padding
+    return Offset(vec.x - 48, vec.y - 48);
   }
 
   @override
@@ -41,7 +52,7 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
           color: ForgeTheme.canvasBg,
           child: Stack(
             children: [
-              // Grid background
+              // Grid
               if (provider.showGrid)
                 Positioned.fill(
                   child: _GridPainter(
@@ -49,86 +60,119 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                           .clamp(4.0, 64.0)),
                 ),
 
-              // InteractiveViewer — disabled when locked
-              InteractiveViewer(
-                transformationController: _transformController,
-                boundaryMargin: const EdgeInsets.all(500),
-                minScale: 0.15,
-                maxScale: 5.0,
-                // When locked: pan/zoom disabled — only widgets move
-                panEnabled: !locked && !provider.isDragging && !provider.isResizing,
-                scaleEnabled: !locked,
-                onInteractionUpdate: (_) {
-                  provider.setCanvasScale(
-                      _transformController.value.getMaxScaleOnAxis());
-                },
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(48),
-                    child: DragTarget<WType>(
-                      onWillAcceptWithDetails: (_) {
-                        setState(() => _isDragOver = true);
-                        return true;
-                      },
-                      onLeave: (_) => setState(() => _isDragOver = false),
-                      onAcceptWithDetails: (details) {
-                        setState(() => _isDragOver = false);
-                        final type = details.data;
-                        final box = context.findRenderObject() as RenderBox?;
-                        if (box == null) {
+              // ── Pointer Listener — intercepts touch before InteractiveViewer ──
+              Listener(
+                behavior: HitTestBehavior.translucent,
+                onPointerDown: (e) => _onPointerDown(e, provider, screen),
+                onPointerMove: (e) => _onPointerMove(e, provider, screen),
+                onPointerUp: (e) => _onPointerUp(e, provider),
+                onPointerCancel: (e) => _onPointerUp(
+                    PointerUpEvent(
+                      pointer: e.pointer,
+                      position: e.position,
+                    ),
+                    provider),
+                child: InteractiveViewer(
+                  transformationController: _tc,
+                  boundaryMargin: const EdgeInsets.all(500),
+                  minScale: 0.15,
+                  maxScale: 5.0,
+                  // Pan/zoom disabled when dragging a widget OR canvas locked
+                  panEnabled: _activeDragId == null && !locked,
+                  scaleEnabled: !locked,
+                  onInteractionUpdate: (_) {
+                    provider.setCanvasScale(
+                        _tc.value.getMaxScaleOnAxis());
+                  },
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(48),
+                      child: DragTarget<WType>(
+                        onWillAcceptWithDetails: (_) {
+                          setState(() => _isDragOver = true);
+                          return true;
+                        },
+                        onLeave: (_) =>
+                            setState(() => _isDragOver = false),
+                        onAcceptWithDetails: (details) {
+                          setState(() => _isDragOver = false);
+                          final type = details.data;
+                          final box = context.findRenderObject() as RenderBox?;
+                          if (box == null) {
+                            provider.addNode(type,
+                                x: screen.canvasWidth / 2 - 60,
+                                y: screen.canvasHeight / 4);
+                            return;
+                          }
+                          final c = _globalToCanvas(details.offset);
                           provider.addNode(type,
-                              x: screen.canvasWidth / 2 - 60,
-                              y: screen.canvasHeight / 4);
-                          return;
-                        }
-                        final localDrop = box.globalToLocal(details.offset);
-                        final scale = _transformController.value.getMaxScaleOnAxis();
-                        final tx = _transformController.value.getTranslation();
-                        double cx = (localDrop.dx - tx.x) / scale - 48;
-                        double cy = (localDrop.dy - tx.y) / scale - 48;
-                        cx = cx.clamp(0, screen.canvasWidth - 100);
-                        cy = cy.clamp(0, screen.canvasHeight - 60);
-                        provider.addNode(type, x: cx, y: cy);
-                      },
-                      builder: (context, _, __) {
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          width: screen.canvasWidth,
-                          height: screen.canvasHeight,
-                          decoration: BoxDecoration(
-                            color: parseColor(screen.backgroundColor,
-                                fallback: Colors.white),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _isDragOver
-                                    ? ForgeTheme.primary.withOpacity(0.35)
-                                    : Colors.black.withOpacity(0.45),
-                                blurRadius: _isDragOver ? 60 : 40,
-                                spreadRadius: _isDragOver ? 8 : 4,
-                              ),
-                            ],
-                            border: _isDragOver
-                                ? Border.all(
-                                    color: ForgeTheme.primary, width: 2)
-                                : null,
-                          ),
-                          child: GestureDetector(
-                            onTap: provider.clearSelection,
-                            behavior: HitTestBehavior.translucent,
+                              x: c.dx.clamp(0, screen.canvasWidth - 100),
+                              y: c.dy.clamp(0, screen.canvasHeight - 60));
+                        },
+                        builder: (context, _, __) => GestureDetector(
+                          onTap: provider.clearSelection,
+                          behavior: HitTestBehavior.translucent,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            width: screen.canvasWidth,
+                            height: screen.canvasHeight,
+                            decoration: BoxDecoration(
+                              color: parseColor(screen.backgroundColor,
+                                  fallback: Colors.white),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: _isDragOver
+                                      ? ForgeTheme.primary.withOpacity(0.35)
+                                      : Colors.black.withOpacity(0.45),
+                                  blurRadius: _isDragOver ? 60 : 40,
+                                  spreadRadius: _isDragOver ? 8 : 4,
+                                ),
+                              ],
+                              border: _isDragOver
+                                  ? Border.all(
+                                      color: ForgeTheme.primary, width: 2)
+                                  : null,
+                            ),
                             child: Stack(
                               clipBehavior: Clip.hardEdge,
                               children: [
-                                // All visible nodes
+                                // Render all visible nodes (IgnorePointer — Listener handles input)
                                 ...screen.sortedNodes
                                     .where((n) => n.visible)
-                                    .map((n) => _CanvasNode(
-                                          node: n,
-                                          allNodes: screen.nodes,
-                                          locked: locked,
-                                          onGuideUpdate: (g) => setState(
-                                              () => _activeGuides = g),
-                                          onDragEnd: () => setState(
-                                              () => _activeGuides = []),
+                                    .map((n) => Positioned(
+                                          left: n.x, top: n.y,
+                                          width: n.width, height: n.height,
+                                          child: Stack(children: [
+                                            IgnorePointer(
+                                                child: WidgetRenderer(node: n)),
+                                            // Selection ring
+                                            if (provider.selectedNodeId == n.id && !locked)
+                                              Positioned.fill(
+                                                child: IgnorePointer(
+                                                  child: DecoratedBox(
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(
+                                                          color: ForgeTheme.selection,
+                                                          width: 1.5),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            // Locked badge
+                                            if (n.locked)
+                                              Positioned(
+                                                top: 2, right: 2,
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(2),
+                                                  decoration: BoxDecoration(
+                                                      color: Colors.black54,
+                                                      borderRadius:
+                                                          BorderRadius.circular(3)),
+                                                  child: const Icon(Icons.lock,
+                                                      color: Colors.white, size: 10),
+                                                ),
+                                              ),
+                                          ]),
                                         )),
 
                                 // Alignment guides
@@ -143,14 +187,13 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                                     ),
                                   ),
 
-                                // Selection handles — only when not locked
+                                // Selection handles (edit mode only)
                                 if (!locked && provider.selectedNode != null)
                                   ForgeSelectionOverlay(
                                     node: provider.selectedNode!,
                                     scale: provider.canvasScale,
                                   ),
 
-                                // Drop hint
                                 if (_isDragOver)
                                   Center(
                                     child: Container(
@@ -170,8 +213,8 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                               ],
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -183,12 +226,11 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                 child: _CanvasInfoBar(provider: provider),
               ),
 
-              // Zoom controls — hidden when locked
+              // Zoom controls
               if (!locked)
                 Positioned(
                   bottom: 10, right: 10,
-                  child: _ZoomControls(
-                      provider: provider, ctrl: _transformController),
+                  child: _ZoomControls(provider: provider, ctrl: _tc),
                 ),
             ],
           ),
@@ -196,97 +238,100 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
       },
     );
   }
+
+  // ── Hit test: which node is under pointer? ────────────────
+  WidgetNode? _hitTest(Offset canvasPos, List<WidgetNode> nodes) {
+    // Reverse order = top z-index first
+    for (final n in nodes.reversed) {
+      if (!n.visible || n.locked) continue;
+      final rect = Rect.fromLTWH(n.x, n.y, n.width, n.height);
+      if (rect.contains(canvasPos)) return n;
+    }
+    return null;
+  }
+
+  // ── Pointer handlers ──────────────────────────────────────
+  void _onPointerDown(PointerDownEvent e, ForgeProvider provider,
+      dynamic screen) {
+    final canvasPos = _globalToCanvas(e.position);
+    final node = _hitTest(canvasPos, screen.sortedNodes);
+
+    if (node == null) {
+      provider.clearSelection();
+      return;
+    }
+
+    // Select it
+    if (!provider.previewLocked) provider.selectNode(node.id);
+
+    // Start drag
+    _activeDragId = node.id;
+    _pointerStartGlobal = e.position;
+    _nodeStartLocal = Offset(node.x, node.y);
+    setState(() {}); // disable InteractiveViewer pan
+  }
+
+  void _onPointerMove(PointerMoveEvent e, ForgeProvider provider,
+      dynamic screen) {
+    if (_activeDragId == null || _pointerStartGlobal == null ||
+        _nodeStartLocal == null) return;
+
+    final node = screen.sortedNodes
+        .cast<WidgetNode?>()
+        .firstWhere((n) => n?.id == _activeDragId, orElse: () => null);
+    if (node == null) return;
+
+    final scale = _tc.value.getMaxScaleOnAxis();
+    final delta = (e.position - _pointerStartGlobal!) / scale;
+
+    double nx = (_nodeStartLocal!.dx + delta.dx)
+        .clamp(0.0, screen.canvasWidth - node.width);
+    double ny = (_nodeStartLocal!.dy + delta.dy)
+        .clamp(0.0, screen.canvasHeight - node.height);
+
+    // Snap
+    final result = computeSnap(
+      dragging: node,
+      others: screen.nodes,
+      proposedX: nx,
+      proposedY: ny,
+    );
+    nx = result.x;
+    ny = result.y;
+
+    node.x = nx;
+    node.y = ny;
+
+    setState(() => _activeGuides = result.guides);
+    provider.notifyMove();
+  }
+
+  void _onPointerUp(PointerUpEvent e, ForgeProvider provider) {
+    if (_activeDragId == null) return;
+
+    // Save final position
+    provider.commitDrag(_activeDragId!, _nodeStartLocal!);
+
+    _activeDragId = null;
+    _pointerStartGlobal = null;
+    _nodeStartLocal = null;
+    setState(() => _activeGuides = []);
+  }
 }
 
-// ── Canvas Node — always draggable (lock or not) ──────────────
-class _CanvasNode extends StatelessWidget {
-  final WidgetNode node;
-  final List<WidgetNode> allNodes;
-  final bool locked; // canvas lock state
-  final ValueChanged<List<Guide>> onGuideUpdate;
-  final VoidCallback onDragEnd;
+// Simple Vector3 for matrix math
+class Vector3 {
+  final double x, y, z;
+  const Vector3(this.x, this.y, this.z);
+}
 
-  const _CanvasNode({
-    required this.node,
-    required this.allNodes,
-    required this.locked,
-    required this.onGuideUpdate,
-    required this.onDragEnd,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<ForgeProvider>();
-    final isSelected = provider.selectedNodeId == node.id;
-
-    return Positioned(
-      left: node.x, top: node.y,
-      width: node.width, height: node.height,
-      child: GestureDetector(
-        // Tap to select (only in edit mode)
-        onTap: () {
-          if (!locked && !node.locked) provider.selectNode(node.id);
-        },
-        // Long press then drag — works in BOTH modes
-        onPanStart: (d) {
-          if (node.locked) return;
-          provider.onDragStart(node.id, d.globalPosition);
-        },
-        onPanUpdate: (d) {
-          if (node.locked) return;
-          provider.onDragUpdate(d.globalPosition);
-          if (provider.isDragging) {
-            final result = computeSnap(
-              dragging: node,
-              others: allNodes,
-              proposedX: node.x,
-              proposedY: node.y,
-            );
-            onGuideUpdate(result.guides);
-            if ((result.x - node.x).abs() < kSnapThreshold ||
-                (result.y - node.y).abs() < kSnapThreshold) {
-              provider.applySnapPosition(node.id, result.x, result.y);
-            }
-          }
-        },
-        onPanEnd: (_) {
-          provider.onDragEnd();
-          onDragEnd();
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            IgnorePointer(child: WidgetRenderer(node: node)),
-
-            // Locked node badge
-            if (node.locked)
-              Positioned(
-                top: 2, right: 2,
-                child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(3)),
-                  child: const Icon(Icons.lock,
-                      color: Colors.white, size: 10),
-                ),
-              ),
-
-            // Selection ring (edit mode only)
-            if (isSelected && !locked)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                          color: ForgeTheme.selection, width: 1.5),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
+extension on Matrix4 {
+  Vector3 transform3(Vector3 v) {
+    final s = storage;
+    return Vector3(
+      s[0]*v.x + s[4]*v.y + s[8]*v.z + s[12],
+      s[1]*v.x + s[5]*v.y + s[9]*v.z + s[13],
+      s[2]*v.x + s[6]*v.y + s[10]*v.z + s[14],
     );
   }
 }
@@ -296,8 +341,7 @@ class _GridPainter extends StatelessWidget {
   final double size;
   const _GridPainter({required this.size});
   @override
-  Widget build(BuildContext context) =>
-      CustomPaint(painter: _GridCP(size));
+  Widget build(BuildContext c) => CustomPaint(painter: _GridCP(size));
 }
 
 class _GridCP extends CustomPainter {
@@ -305,16 +349,14 @@ class _GridCP extends CustomPainter {
   _GridCP(this.size);
   @override
   void paint(Canvas c, Size s) {
-    final p = Paint()
-      ..color = ForgeTheme.canvasGrid
-      ..strokeWidth = 0.5;
+    final p = Paint()..color = ForgeTheme.canvasGrid..strokeWidth = 0.5;
     for (double x = 0; x < s.width; x += size)
       c.drawLine(Offset(x, 0), Offset(x, s.height), p);
     for (double y = 0; y < s.height; y += size)
       c.drawLine(Offset(0, y), Offset(s.width, y), p);
   }
   @override
-  bool shouldRepaint(covariant _GridCP old) => old.size != size;
+  bool shouldRepaint(covariant _GridCP o) => o.size != size;
 }
 
 // ── Info bar ──────────────────────────────────────────────────
@@ -323,7 +365,7 @@ class _CanvasInfoBar extends StatelessWidget {
   const _CanvasInfoBar({required this.provider});
   @override
   Widget build(BuildContext context) {
-    final node = provider.selectedNode;
+    final n = provider.selectedNode;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -331,8 +373,8 @@ class _CanvasInfoBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        node != null
-            ? '${node.displayName}  x:${node.x.round()}  y:${node.y.round()}  ${node.width.round()}×${node.height.round()}'
+        n != null
+            ? '${n.displayName}  x:${n.x.round()}  y:${n.y.round()}  ${n.width.round()}×${n.height.round()}'
             : '${provider.currentScreen.name}  ·  ${provider.currentScreen.nodes.length} widgets',
         style: const TextStyle(
             color: Colors.white, fontSize: 10, fontFamily: 'monospace'),
@@ -347,9 +389,8 @@ class _ZoomControls extends StatelessWidget {
   final TransformationController ctrl;
   const _ZoomControls({required this.provider, required this.ctrl});
 
-  void _zoom(double factor) {
-    final cur = ctrl.value.getMaxScaleOnAxis();
-    final next = (cur * factor).clamp(0.15, 5.0);
+  void _zoom(double f) {
+    final next = (ctrl.value.getMaxScaleOnAxis() * f).clamp(0.15, 5.0);
     ctrl.value = Matrix4.identity()..scale(next);
     provider.setCanvasScale(next);
   }
@@ -366,24 +407,19 @@ class _ZoomControls extends StatelessWidget {
         color: Colors.black.withOpacity(0.55),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _ZBtn(Icons.remove, () => _zoom(0.8)),
-          InkWell(
-            onTap: _reset,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Text(
-                '${(provider.canvasScale * 100).round()}%',
-                style: const TextStyle(color: Colors.white, fontSize: 11),
-              ),
-            ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        _ZBtn(Icons.remove, () => _zoom(0.8)),
+        InkWell(
+          onTap: _reset,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            child: Text('${(provider.canvasScale * 100).round()}%',
+                style: const TextStyle(color: Colors.white, fontSize: 11)),
           ),
-          _ZBtn(Icons.add, () => _zoom(1.25)),
-          _ZBtn(Icons.fit_screen_rounded, _reset, tooltip: 'Reset'),
-        ],
-      ),
+        ),
+        _ZBtn(Icons.add, () => _zoom(1.25)),
+        _ZBtn(Icons.fit_screen_rounded, _reset),
+      ]),
     );
   }
 }
@@ -391,17 +427,13 @@ class _ZoomControls extends StatelessWidget {
 class _ZBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  final String? tooltip;
-  const _ZBtn(this.icon, this.onTap, {this.tooltip});
+  const _ZBtn(this.icon, this.onTap);
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext c) => InkWell(
     onTap: onTap,
-    child: Tooltip(
-      message: tooltip ?? '',
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 14, color: Colors.white),
-      ),
+    child: Padding(
+      padding: const EdgeInsets.all(6),
+      child: Icon(icon, size: 14, color: Colors.white),
     ),
   );
 }

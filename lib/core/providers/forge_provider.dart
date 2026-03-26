@@ -460,6 +460,28 @@ class ForgeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+
+  // ── Called by canvas during direct pointer drag ───────────
+  // Just notify listeners (node.x/y already updated directly)
+  void notifyMove() {
+    notifyListeners();
+  }
+
+  // Commit drag — record to history + auto-save
+  void commitDrag(String nodeId, Offset startPos) {
+    final node = _findById(nodeId, currentScreen.nodes);
+    if (node == null) return;
+    if (node.x != startPos.dx || node.y != startPos.dy) {
+      _history.record(MoveNodeCommand(
+        nodeId: nodeId,
+        oldX: startPos.dx, oldY: startPos.dy,
+        newX: node.x, newY: node.y,
+      ));
+      saveProject();
+    }
+    notifyListeners();
+  }
+
   // ── Helpers ───────────────────────────────────────────────
   WidgetNode? _findById(String id, List<WidgetNode> nodes) {
     for (final n in nodes) {
