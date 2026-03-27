@@ -76,19 +76,19 @@ class _BuilderAppBar extends StatelessWidget implements PreferredSizeWidget {
 
             // 🔒 Lock button — locks canvas pan/zoom, widgets stay draggable
             Tooltip(
-              message: provider.previewLocked
+              message: provider.canvasLocked
                   ? 'Canvas locked — tap to unlock'
                   : 'Lock canvas (widgets still moveable)',
               child: IconButton(
                 icon: Icon(
-                  provider.previewLocked
+                  provider.canvasLocked
                       ? Icons.lock_rounded
                       : Icons.lock_open_rounded,
-                  color: provider.previewLocked
+                  color: provider.canvasLocked
                       ? Colors.yellowAccent : Colors.white54,
                   size: 22,
                 ),
-                onPressed: provider.togglePreviewLock,
+                onPressed: provider.toggleCanvasLock,
               ),
             ),
 
@@ -159,8 +159,8 @@ class _WideLayout extends StatelessWidget {
         children: [
           const ScreenTabBar(),
           // Lock banner
-          if (provider.previewLocked)
-            _LockBanner(onUnlock: provider.togglePreviewLock),
+          if (provider.canvasLocked)
+            _LockBanner(onUnlock: provider.toggleCanvasLock),
           Expanded(
             child: Row(
               children: [
@@ -251,7 +251,7 @@ class _VerticalPalette extends StatelessWidget {
               label: item.$2,
               onTap: () {
                 final provider = context.read<ForgeProvider>();
-                final screen = provider.currentScreen;
+                final screen = provider.screen;
                 provider.addNode(item.$3,
                     x: screen.canvasWidth / 2 - 60,
                     y: 80.0 + (idx * 60.0));
@@ -348,8 +348,8 @@ class _MobileLayout extends StatelessWidget {
       builder: (context, provider, _) => Column(
         children: [
           const ScreenTabBar(),
-          if (provider.previewLocked)
-            _LockBanner(onUnlock: provider.togglePreviewLock),
+          if (provider.canvasLocked)
+            _LockBanner(onUnlock: provider.toggleCanvasLock),
           Expanded(
             child: IndexedStack(
               index: provider.activeSidePanel,

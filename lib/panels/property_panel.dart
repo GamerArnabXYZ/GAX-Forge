@@ -28,7 +28,7 @@ class PropertyPanel extends StatelessWidget {
                     ? [
                         PanelIconBtn(
                           icon: Icons.copy_outlined,
-                          onTap: () => provider.duplicateNode(node.id),
+                          onTap: () => provider.duplicate(node.id),
                           tooltip: 'Duplicate',
                         ),
                         PanelIconBtn(
@@ -336,16 +336,16 @@ class _XYWHEditor extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: _NumField('X', node.x, (v) =>
-            provider.updateNodePos(node.id, v, node.y))),
+            provider.updatePos(node.id, v, node.y))),
         const SizedBox(width: 6),
         Expanded(child: _NumField('Y', node.y, (v) =>
-            provider.updateNodePos(node.id, node.x, v))),
+            provider.updatePos(node.id, node.x, v))),
         const SizedBox(width: 6),
         Expanded(child: _NumField('W', node.width, (v) =>
-            provider.updateNodeSize(node.id, v, node.height))),
+            provider.updateSize(node.id, v, node.height))),
         const SizedBox(width: 6),
         Expanded(child: _NumField('H', node.height, (v) =>
-            provider.updateNodeSize(node.id, node.width, v))),
+            provider.updateSize(node.id, node.width, v))),
       ],
     );
   }

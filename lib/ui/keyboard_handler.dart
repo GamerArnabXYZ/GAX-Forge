@@ -35,7 +35,7 @@ class _ForgeKeyboardHandlerState extends State<ForgeKeyboardHandler> {
       // Delete / Backspace — delete selected
       case LogicalKeyboardKey.delete:
       case LogicalKeyboardKey.backspace:
-        if (provider.selectedNodeId != null) {
+        if (provider.selectedId != null) {
           provider.deleteSelected();
           return KeyEventResult.handled;
         }
@@ -56,8 +56,8 @@ class _ForgeKeyboardHandlerState extends State<ForgeKeyboardHandler> {
 
       // Ctrl+D — duplicate selected
       case LogicalKeyboardKey.keyD:
-        if (ctrl && provider.selectedNodeId != null) {
-          provider.duplicateNode(provider.selectedNodeId!);
+        if (ctrl && provider.selectedId != null) {
+          provider.duplicate(provider.selectedId!);
           return KeyEventResult.handled;
         }
 
@@ -82,15 +82,15 @@ class _ForgeKeyboardHandlerState extends State<ForgeKeyboardHandler> {
 
       // Ctrl+] — bring to front
       case LogicalKeyboardKey.bracketRight:
-        if (ctrl && provider.selectedNodeId != null) {
-          provider.bringToFront(provider.selectedNodeId!);
+        if (ctrl && provider.selectedId != null) {
+          provider.bringToFront(provider.selectedId!);
           return KeyEventResult.handled;
         }
 
       // Ctrl+[ — send to back
       case LogicalKeyboardKey.bracketLeft:
-        if (ctrl && provider.selectedNodeId != null) {
-          provider.sendToBack(provider.selectedNodeId!);
+        if (ctrl && provider.selectedId != null) {
+          provider.sendToBack(provider.selectedId!);
           return KeyEventResult.handled;
         }
 
@@ -105,7 +105,7 @@ class _ForgeKeyboardHandlerState extends State<ForgeKeyboardHandler> {
       {required double dx, required double dy}) {
     final node = provider.selectedNode;
     if (node == null) return;
-    provider.updateNodePos(node.id, node.x + dx, node.y + dy);
+    provider.updatePos(node.id, node.x + dx, node.y + dy);
   }
 
   @override

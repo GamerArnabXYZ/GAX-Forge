@@ -37,9 +37,9 @@ class _CodeExportSheetState extends State<_CodeExportSheet> {
     if (_mode == 1) {
       code = DartCodeGen.generateProject(provider.screens);
     } else if (_mode == 2) {
-      code = StatefulCodeGen.generateStatefulScreen(provider.currentScreen);
+      code = StatefulCodeGen.generateStatefulScreen(provider.screen);
     } else {
-      code = DartCodeGen.generateScreen(provider.currentScreen);
+      code = DartCodeGen.generateScreen(provider.screen);
     }
 
     final lineCount = code.split('\n').length;

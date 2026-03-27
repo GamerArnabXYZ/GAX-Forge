@@ -11,7 +11,7 @@ class LayersPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ForgeProvider>(
       builder: (context, provider, _) {
-        final nodes = provider.currentScreen.sortedNodes.reversed.toList();
+        final nodes = provider.screen.sortedNodes.reversed.toList();
 
         return Container(
           color: ForgeTheme.surface1,
@@ -52,12 +52,12 @@ class LayersPanel extends StatelessWidget {
                           return _LayerItem(
                             key: ValueKey(node.id),
                             node: node,
-                            isSelected: provider.selectedNodeId == node.id,
-                            onTap: () => provider.selectNode(node.id),
-                            onVisibility: () => provider.toggleVisibility(node.id),
+                            isSelected: provider.selectedId == node.id,
+                            onTap: () => provider.select(node.id),
+                            onVisibility: () => provider.toggleVisible(node.id),
                             onLock: () => provider.toggleLock(node.id),
                             onDelete: () => provider.deleteNode(node.id),
-                            onDuplicate: () => provider.duplicateNode(node.id),
+                            onDuplicate: () => provider.duplicate(node.id),
                             onBringFront: () => provider.bringToFront(node.id),
                             onSendBack: () => provider.sendToBack(node.id),
                             onRename: (name) => provider.renameNode(node.id, name),
@@ -312,7 +312,7 @@ class _ScreenBgRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = parseColor(provider.currentScreen.backgroundColor,
+    final bg = parseColor(provider.screen.backgroundColor,
         fallback: Colors.white);
     return Container(
       height: 36,
@@ -340,7 +340,7 @@ class _ScreenBgRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Text(provider.currentScreen.backgroundColor,
+          Text(provider.screen.backgroundColor,
               style: const TextStyle(
                   color: ForgeTheme.textMuted, fontSize: 10,
                   fontFamily: 'monospace')),
@@ -352,7 +352,7 @@ class _ScreenBgRow extends StatelessWidget {
   void _pickColor(BuildContext context) {
     // Simple color input dialog
     final ctrl = TextEditingController(
-        text: provider.currentScreen.backgroundColor);
+        text: provider.screen.backgroundColor);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(

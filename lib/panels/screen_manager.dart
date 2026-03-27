@@ -61,7 +61,7 @@ class _ScreenTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<ForgeProvider>();
     final screen = provider.screens[index];
-    final isActive = provider.currentScreenIndex == index;
+    final isActive = provider.screenIdx == index;
 
     return GestureDetector(
       onTap: () => provider.switchScreen(index),

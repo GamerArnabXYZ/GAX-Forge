@@ -83,7 +83,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final idx = _projects.indexWhere((p) => p.id == project.id);
       if (idx >= 0) {
         _projects[idx].lastEdited = DateTime.now();
-        _projects[idx].widgetCount = provider.currentScreen.nodes.length;
+        _projects[idx].widgetCount = provider.screen.nodes.length;
         _projects[idx].screenCount = provider.screens.length;
       }
     });

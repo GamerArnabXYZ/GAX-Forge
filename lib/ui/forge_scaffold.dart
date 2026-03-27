@@ -354,7 +354,7 @@ class _TopBar extends StatelessWidget {
                 PanelIconBtn(
                   icon: Icons.copy_outlined,
                   onTap: () =>
-                      provider.duplicateNode(provider.selectedNodeId!),
+                      provider.duplicate(provider.selectedId!),
                   tooltip: 'Duplicate  Ctrl+D',
                 ),
                 PanelIconBtn(

@@ -41,7 +41,7 @@ class _DraggableWidgetChipState extends State<DraggableWidgetChip> {
         onTapCancel: () => setState(() => _pressing = false),
         onTap: () {
           final provider = context.read<ForgeProvider>();
-          final screen = provider.currentScreen;
+          final screen = provider.screen;
           provider.addNode(
             widget.type,
             x: screen.canvasWidth / 2 - 60,

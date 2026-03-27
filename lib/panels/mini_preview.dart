@@ -13,7 +13,7 @@ class MiniPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ForgeProvider>(
       builder: (context, provider, _) {
-        final screen = provider.currentScreen;
+        final screen = provider.screen;
         const previewW = 180.0;
         final scale = previewW / screen.canvasWidth;
         final previewH = screen.canvasHeight * scale;

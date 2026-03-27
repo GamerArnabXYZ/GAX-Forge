@@ -75,7 +75,7 @@ Future<void> showNodeContextMenu({
 
   switch (result) {
     case 'duplicate':
-      provider.duplicateNode(node.id);
+      provider.duplicate(node.id);
       break;
     case 'front':
       provider.bringToFront(node.id);
@@ -85,7 +85,7 @@ Future<void> showNodeContextMenu({
       break;
     case 'hide':
     case 'show':
-      provider.toggleVisibility(node.id);
+      provider.toggleVisible(node.id);
       break;
     case 'lock':
     case 'unlock':

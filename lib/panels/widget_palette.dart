@@ -62,7 +62,7 @@ class _WidgetPaletteState extends State<WidgetPalette>
                 Tab(
                   child: Consumer<ForgeProvider>(
                     builder: (_, provider, __) {
-                      final count = provider.currentScreen.nodes.length;
+                      final count = provider.screen.nodes.length;
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -244,7 +244,7 @@ class _AddedWidgetsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ForgeProvider>(
       builder: (context, provider, _) {
-        final nodes = provider.currentScreen.sortedNodes.reversed.toList();
+        final nodes = provider.screen.sortedNodes.reversed.toList();
 
         if (nodes.isEmpty) {
           return const Center(
@@ -321,18 +321,18 @@ class _AddedWidgetsTab extends StatelessWidget {
                   return _AddedWidgetItem(
                     key: ValueKey(node.id),
                     node: node,
-                    isSelected: provider.selectedNodeId == node.id,
+                    isSelected: provider.selectedId == node.id,
                     onTap: () {
-                      provider.selectNode(node.id);
+                      provider.select(node.id);
                       // Switch to canvas on mobile
                       if (MediaQuery.of(context).size.width < 700) {
                         provider.setSidePanel(0);
                       }
                     },
                     onDelete: () => provider.deleteNode(node.id),
-                    onDuplicate: () => provider.duplicateNode(node.id),
+                    onDuplicate: () => provider.duplicate(node.id),
                     onToggleVisible: () =>
-                        provider.toggleVisibility(node.id),
+                        provider.toggleVisible(node.id),
                     onToggleLock: () => provider.toggleLock(node.id),
                   );
                 },
@@ -358,7 +358,7 @@ class _AddedWidgetsTab extends StatelessWidget {
             onPressed: () {
               Navigator.pop(context);
               // Delete all nodes
-              final ids = provider.currentScreen.nodes
+              final ids = provider.screen.nodes
                   .map((n) => n.id)
                   .toList();
               for (final id in ids) provider.deleteNode(id);
