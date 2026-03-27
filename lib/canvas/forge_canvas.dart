@@ -35,10 +35,12 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
     final box = context.findRenderObject() as RenderBox?;
     if (box == null) return global;
     final local = box.globalToLocal(global);
-    final inv = Matrix4.inverted(_tc.value);
-    final vec = inv.transform3(Vector3(local.dx, local.dy, 0));
+    // Use matrix storage directly to avoid Vector3 type conflict
+    final m = Matrix4.inverted(_tc.value).storage;
+    final x = m[0]*local.dx + m[4]*local.dy + m[12];
+    final y = m[1]*local.dx + m[5]*local.dy + m[13];
     // subtract the 48px padding inside InteractiveViewer's Center+Padding
-    return Offset(vec.x - 48, vec.y - 48);
+    return Offset(x - 48, y - 48);
   }
 
   @override
@@ -285,9 +287,9 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
     final delta = (e.position - _pointerStartGlobal!) / scale;
 
     double nx = (_nodeStartLocal!.dx + delta.dx)
-        .clamp(0.0, screen.canvasWidth - node.width);
+        .clamp(0.0, screen.canvasWidth - node.width) as double;
     double ny = (_nodeStartLocal!.dy + delta.dy)
-        .clamp(0.0, screen.canvasHeight - node.height);
+        .clamp(0.0, screen.canvasHeight - node.height) as double;
 
     // Snap
     final result = computeSnap(
@@ -316,23 +318,6 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
     _pointerStartGlobal = null;
     _nodeStartLocal = null;
     setState(() => _activeGuides = []);
-  }
-}
-
-// Simple Vector3 for matrix math
-class Vector3 {
-  final double x, y, z;
-  const Vector3(this.x, this.y, this.z);
-}
-
-extension on Matrix4 {
-  Vector3 transform3(Vector3 v) {
-    final s = storage;
-    return Vector3(
-      s[0]*v.x + s[4]*v.y + s[8]*v.z + s[12],
-      s[1]*v.x + s[5]*v.y + s[9]*v.z + s[13],
-      s[2]*v.x + s[6]*v.y + s[10]*v.z + s[14],
-    );
   }
 }
 
