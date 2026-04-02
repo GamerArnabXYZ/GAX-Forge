@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +19,7 @@ class ForgeProvider extends ChangeNotifier {
   int _activeSidePanel = 0;
   String? _projectId;
   final CommandHistory _history = CommandHistory();
+  Timer? _saveDebounce;
 
   // ── Getters ───────────────────────────────────────────────
   List<ForgeScreen> get screens      => _screens;
@@ -70,7 +72,19 @@ class ForgeProvider extends ChangeNotifier {
     } catch (e) { debugPrint('save: $e'); }
   }
 
-  void _autoSave() => saveProject();
+  @override
+  void dispose() {
+    _saveDebounce?.cancel();
+    super.dispose();
+  }
+
+  void _autoSave() {
+    _saveDebounce?.cancel();
+    _saveDebounce = Timer(const Duration(milliseconds: 600), saveProject);
+  }
+
+  // Public notify (for canvas cancel case)
+  void notifyListeners_public() => notifyListeners();
 
   // ── Screens ───────────────────────────────────────────────
   void switchScreen(int i) {
@@ -196,6 +210,14 @@ class ForgeProvider extends ChangeNotifier {
     _autoSave(); notifyListeners();
   }
 
+  // Silent update — for slider visual feedback (no history, no save)
+  void updatePropSilent(String id, String key, dynamic val) {
+    final node = _find(id, screen.nodes);
+    if (node == null) return;
+    node.props[key] = val;
+    notifyListeners();
+  }
+
   void updateSize(String id, double w, double h) {
     final node = _find(id, screen.nodes);
     if (node == null) return;
@@ -300,10 +322,11 @@ class ForgeProvider extends ChangeNotifier {
 
   // ── Clear ─────────────────────────────────────────────────
   Future<void> clearAll() async {
-    _screens    = [ForgeScreen.defaultHome()];
-    _screenIdx  = 0;
-    _selectedId = null;
+    _screens      = [ForgeScreen.defaultHome()];
+    _screenIdx    = 0;
+    _selectedId   = null;
     _canvasLocked = false;
+    // NOTE: do NOT reset _projectId here — caller sets it via loadProject
     _history.clear();
     notifyListeners();
   }

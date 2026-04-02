@@ -25,10 +25,31 @@ class ForgeScreen {
         nodes = nodes ?? [];
 
   // Nodes sorted by zIndex (render order)
+  // Returns same references, just sorted — stable for widget keys
   List<WidgetNode> get sortedNodes {
     final list = List<WidgetNode>.from(nodes);
     list.sort((a, b) => a.zIndex.compareTo(b.zIndex));
     return list;
+  }
+
+  // Stable sorted nodes — same list if zIndexes unchanged
+  List<WidgetNode>? _sortedCache;
+  List<int>? _sortedCacheKeys;
+
+  List<WidgetNode> get sortedNodesStable {
+    final keys = nodes.map((n) => n.zIndex).toList();
+    if (_sortedCache != null && _sortedCacheKeys != null &&
+        _sortedCacheKeys!.length == keys.length) {
+      bool same = true;
+      for (int i = 0; i < keys.length; i++) {
+        if (_sortedCacheKeys![i] != keys[i]) { same = false; break; }
+      }
+      if (same) return _sortedCache!;
+    }
+    _sortedCache = List<WidgetNode>.from(nodes)
+      ..sort((a, b) => a.zIndex.compareTo(b.zIndex));
+    _sortedCacheKeys = keys;
+    return _sortedCache!;
   }
 
   int get nextZIndex =>

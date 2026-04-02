@@ -597,7 +597,11 @@ class _PropSliderWidget extends StatelessWidget {
           ),
           child: Slider(
             value: val, min: min, max: max,
-            onChanged: (v) => provider.updateProp(node.id, key_, v),
+            // Visual update immediately, save only on release
+            onChanged: (v) {
+              provider.updatePropSilent(node.id, key_, v);
+            },
+            onChangeEnd: (v) => provider.updateProp(node.id, key_, v),
           ),
         ),
       ],

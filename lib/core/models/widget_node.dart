@@ -418,7 +418,7 @@ class WidgetNode {
     List<WidgetNode>? children, int? zIndex,
   }) {
     return WidgetNode(
-      id: id ?? this.id,
+      id: id ?? const Uuid().v4(),
       type: type ?? this.type,
       x: x ?? this.x, y: y ?? this.y,
       width: width ?? this.width, height: height ?? this.height,

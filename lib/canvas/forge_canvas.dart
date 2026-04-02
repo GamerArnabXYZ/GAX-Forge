@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../core/providers/forge_provider.dart';
 import '../core/models/widget_node.dart';
@@ -6,13 +7,22 @@ import '../ui/theme.dart';
 import 'widget_renderer.dart';
 import 'selection_handles.dart';
 
-// ─────────────────────────────────────────────────────────────
-//  ForgeCanvas
-//  • InteractiveViewer handles zoom/pan
-//  • Each widget is individually draggable via GestureDetector
-//  • panEnabled = false while ANY widget is being dragged
-//  • canvasLocked = pan/zoom off, drag still works
-// ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+//  ForgeCanvas — complete rewrite of drag handling
+//
+//  ROOT CAUSE of all drag problems:
+//  GestureDetector onPanStart fires AFTER the gesture arena
+//  resolves. InteractiveViewer is an outer widget and wins
+//  the arena first. Solution: use a top-level Listener that
+//  intercepts raw pointer events BEFORE arena resolution.
+//
+//  Architecture:
+//  • Listener (raw pointer) → hit-test which widget
+//  • If widget hit → block InteractiveViewer via panEnabled=false
+//  • Move widget directly using pointer delta / current scale
+//  • On pointer up → commit to history + notify
+// ═══════════════════════════════════════════════════════════════
+
 class ForgeCanvas extends StatefulWidget {
   const ForgeCanvas({super.key});
   @override
@@ -21,316 +31,322 @@ class ForgeCanvas extends StatefulWidget {
 
 class _ForgeCanvasState extends State<ForgeCanvas> {
   final _tc = TransformationController();
-  String? _dragging;   // id of node being dragged
+
+  // Active drag tracking
+  String?  _dragId;          // id of node being dragged
+  double   _dragStartNodeX = 0, _dragStartNodeY = 0;
+  double   _dragStartPtrX  = 0, _dragStartPtrY  = 0;
+  Offset   _nodeDisplayPos = Offset.zero; // for overlay sync
+
+  // Active resize tracking (from handles)
+  bool _isResizing = false;
 
   @override
   void dispose() { _tc.dispose(); super.dispose(); }
+
+  // Current canvas scale
+  double get _scale => _tc.value.getMaxScaleOnAxis();
+
+  // Convert screen global → canvas local coordinates
+  Offset _toCanvas(Offset global) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return global;
+    final local = box.globalToLocal(global);
+    // Undo transform: inverse of tc
+    final inv = Matrix4.inverted(_tc.value);
+    final s = inv.storage;
+    final x = s[0]*local.dx + s[4]*local.dy + s[12];
+    final y = s[1]*local.dx + s[5]*local.dy + s[13];
+    // Subtract the 48px margin from InteractiveViewer's Center+Padding
+    return Offset(x - 48, y - 48);
+  }
+
+  // Hit-test: which node is under a canvas coordinate?
+  WidgetNode? _hitTest(Offset canvasPos, ForgeProvider p) {
+    final nodes = p.screen.sortedNodes;
+    // Top-most (highest zIndex) first
+    for (int i = nodes.length - 1; i >= 0; i--) {
+      final n = nodes[i];
+      if (!n.visible || n.locked) continue;
+      final r = Rect.fromLTWH(n.x, n.y, n.width, n.height);
+      if (r.inflate(4).contains(canvasPos)) return n;
+    }
+    return null;
+  }
+
+  void _onPointerDown(PointerDownEvent e, ForgeProvider p) {
+    if (_isResizing) return;
+    final canvas = _toCanvas(e.position);
+    final hit = _hitTest(canvas, p);
+    if (hit == null) {
+      p.clearSelection();
+      return;
+    }
+    // Claim this drag
+    _dragId         = hit.id;
+    _dragStartNodeX = hit.x;
+    _dragStartNodeY = hit.y;
+    _dragStartPtrX  = e.position.dx;
+    _dragStartPtrY  = e.position.dy;
+    _nodeDisplayPos = Offset(hit.x, hit.y);
+    if (!p.canvasLocked) p.select(hit.id);
+    // Disable IV pan immediately (synchronous, before any frame)
+    if (mounted) setState(() {});
+  }
+
+  void _onPointerMove(PointerMoveEvent e, ForgeProvider p) {
+    if (_dragId == null || _isResizing) return;
+    final sc  = _scale.clamp(0.05, 10.0);
+    final dx  = (e.position.dx - _dragStartPtrX) / sc;
+    final dy  = (e.position.dy - _dragStartPtrY) / sc;
+    final scr = p.screen;
+
+    final nx = (_dragStartNodeX + dx)
+        .clamp(0.0, scr.canvasWidth  - _nodeW(p));
+    final ny = (_dragStartNodeY + dy)
+        .clamp(0.0, scr.canvasHeight - _nodeH(p));
+
+    _nodeDisplayPos = Offset(nx, ny);
+    p.moveNodeDirect(_dragId!, nx, ny);
+    // Rebuild only the canvas state (not entire tree via provider)
+    if (mounted) setState(() {});
+  }
+
+  void _onPointerUp(PointerUpEvent e, ForgeProvider p) {
+    if (_dragId == null) return;
+    p.commitMove(_dragId!, _dragStartNodeX, _dragStartNodeY);
+    _dragId = null;
+    if (mounted) setState(() {});
+  }
+
+  void _onPointerCancel(PointerCancelEvent e, ForgeProvider p) {
+    if (_dragId == null) return;
+    // Restore original pos
+    p.moveNodeDirect(_dragId!, _dragStartNodeX, _dragStartNodeY);
+    p.notifyListeners_public();
+    _dragId = null;
+    if (mounted) setState(() {});
+  }
+
+  double _nodeW(ForgeProvider p) {
+    if (_dragId == null) return 0;
+    final n = p.screen.nodes.firstWhere(
+        (x) => x.id == _dragId, orElse: () => p.screen.nodes.first);
+    return n.width;
+  }
+  double _nodeH(ForgeProvider p) {
+    if (_dragId == null) return 0;
+    final n = p.screen.nodes.firstWhere(
+        (x) => x.id == _dragId, orElse: () => p.screen.nodes.first);
+    return n.height;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ForgeProvider>(
       builder: (_, p, __) {
-        final s = p.screen;
+        final s      = p.screen;
         final locked = p.canvasLocked;
+        final isDragging = _dragId != null;
 
-        return Container(
-          color: ForgeTheme.canvasBg,
-          child: Stack(children: [
+        return Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerDown:  (e) => _onPointerDown(e, p),
+          onPointerMove:  (e) => _onPointerMove(e, p),
+          onPointerUp:    (e) => _onPointerUp(e, p),
+          onPointerCancel:(e) => _onPointerCancel(e, p),
+          child: Container(
+            color: ForgeTheme.canvasBg,
+            child: Stack(children: [
 
-            // Grid dots
-            if (p.showGrid)
-              Positioned.fill(child: _GridWidget(
-                  cellSize: (8.0 * p.scale).clamp(6.0, 48.0))),
+              // Grid
+              if (p.showGrid)
+                Positioned.fill(child: _GridWidget(
+                    cellSize: (8.0 * _scale).clamp(6.0, 48.0))),
 
-            // Main viewer
-            InteractiveViewer(
-              transformationController: _tc,
-              boundaryMargin: const EdgeInsets.all(600),
-              minScale: 0.1,
-              maxScale: 5.0,
-              panEnabled:  _dragging == null && !locked,
-              scaleEnabled: !locked,
-              onInteractionUpdate: (_) =>
-                  p.setScale(_tc.value.getMaxScaleOnAxis()),
-              child: Center(
-                child: Container(
-                  margin: const EdgeInsets.all(48),
-                  width:  s.canvasWidth,
-                  height: s.canvasHeight,
-                  decoration: BoxDecoration(
-                    color: parseColor(s.backgroundColor,
-                        fallback: Colors.white),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0x44000000),
-                          blurRadius: 32, spreadRadius: 4),
-                    ],
-                  ),
-                  // Tap canvas bg = deselect
-                  child: GestureDetector(
-                    onTap: p.clearSelection,
-                    behavior: HitTestBehavior.translucent,
+              InteractiveViewer(
+                transformationController: _tc,
+                boundaryMargin: const EdgeInsets.all(600),
+                minScale: 0.1,
+                maxScale: 5.0,
+                // CRITICAL: Disable when dragging OR locked
+                panEnabled:   !isDragging && !locked,
+                scaleEnabled: !locked,
+                onInteractionUpdate: (_) =>
+                    p.setScale(_tc.value.getMaxScaleOnAxis()),
+                child: Center(
+                  child: Container(
+                    margin: const EdgeInsets.all(48),
+                    width:  s.canvasWidth,
+                    height: s.canvasHeight,
+                    decoration: BoxDecoration(
+                      color: parseColor(s.backgroundColor,
+                          fallback: Colors.white),
+                      boxShadow: const [BoxShadow(
+                          color: Color(0x55000000), blurRadius: 30)],
+                    ),
                     child: Stack(
-                      clipBehavior: Clip.hardEdge,
+                      clipBehavior: Clip.none, // handles can go outside
                       children: [
 
-                        // ── Widgets ──────────────────────────
-                        ...s.sortedNodes.where((n) => n.visible).map((n) =>
-                          _DraggableNode(
-                            key: ValueKey(n.id),
-                            node:     n,
-                            provider: p,
-                            locked:   locked,
-                            scale:    _tc.value.getMaxScaleOnAxis(),
-                            onDragStart: () =>
-                                setState(() => _dragging = n.id),
-                            onDragEnd: () =>
-                                setState(() => _dragging = null),
+                        // Content clip
+                        ClipRect(
+                          child: SizedBox(
+                            width: s.canvasWidth,
+                            height: s.canvasHeight,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.translucent,
+                              onTap: p.clearSelection,
+                              child: Stack(
+                                children: s.sortedNodes
+                                    .where((n) => n.visible)
+                                    .map((n) => _WidgetTile(
+                                          key:      ValueKey(n.id),
+                                          node:     n,
+                                          // Use local display pos for dragged node
+                                          overrideX: _dragId == n.id
+                                              ? _nodeDisplayPos.dx : null,
+                                          overrideY: _dragId == n.id
+                                              ? _nodeDisplayPos.dy : null,
+                                          selectedId: p.selectedId,
+                                          locked:   locked,
+                                        ))
+                                    .toList(),
+                              ),
+                            ),
                           ),
                         ),
 
-                        // ── Selection handles ─────────────────
-                        if (!locked && p.selectedNode != null)
-                          _HandlesOverlay(
-                            node:     p.selectedNode!,
-                            provider: p,
-                            scale:    _tc.value.getMaxScaleOnAxis(),
-                            canvasW:  s.canvasWidth,
-                            canvasH:  s.canvasHeight,
-                          ),
+                        // Selection handles — outside clip
+                        if (!locked && p.selectedId != null)
+                          _buildHandles(p),
                       ],
                     ),
                   ),
                 ),
               ),
-            ),
 
-            // Info bar
-            Positioned(
-              left: 8, bottom: 8,
-              child: _InfoBar(p: p),
-            ),
+              // Info bar
+              Positioned(left: 8, bottom: 8, child: _InfoBar(p: p,
+                  dragId: _dragId, nodePos: _nodeDisplayPos)),
 
-            // Zoom bar (hidden when locked)
-            if (!locked)
-              Positioned(
-                right: 8, bottom: 8,
-                child: _ZoomBar(tc: _tc, p: p),
-              ),
+              // Zoom controls
+              if (!locked)
+                Positioned(right: 8, bottom: 8,
+                    child: _ZoomBar(tc: _tc, p: p)),
 
-            // Lock banner
-            if (locked)
-              Positioned(
-                top: 0, left: 0, right: 0,
-                child: _LockBanner(onUnlock: p.toggleCanvasLock),
-              ),
-          ]),
+              // Lock banner
+              if (locked)
+                Positioned(top: 0, left: 0, right: 0,
+                    child: _LockBanner(onUnlock: p.toggleCanvasLock)),
+            ]),
+          ),
         );
       },
     );
   }
+
+  Widget _buildHandles(ForgeProvider p) {
+    final node = p.screen.nodes
+        .cast<WidgetNode?>()
+        .firstWhere((n) => n?.id == p.selectedId, orElse: () => null);
+    if (node == null) return const SizedBox.shrink();
+
+    // Use display pos if this node is being dragged
+    final dispX = (_dragId == node.id) ? _nodeDisplayPos.dx : node.x;
+    final dispY = (_dragId == node.id) ? _nodeDisplayPos.dy : node.y;
+
+    return ForgeSelectionOverlay(
+      node:     node,
+      displayX: dispX,
+      displayY: dispY,
+      getScale: () => _tc.value.getMaxScaleOnAxis(),
+      onResizeStart: () => setState(() => _isResizing = true),
+      onResizeEnd:   () => setState(() => _isResizing = false),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
-//  _DraggableNode
-//  GestureDetector wrapping each widget — pan events here
-//  WILL win over InteractiveViewer because panEnabled=false
-//  during drag.
+//  _WidgetTile — pure display widget, no gesture handling
+//  (all gestures handled by ForgeCanvas Listener)
 // ─────────────────────────────────────────────────────────────
-class _DraggableNode extends StatefulWidget {
-  final WidgetNode   node;
-  final ForgeProvider provider;
-  final bool         locked;
-  final double       scale;
-  final VoidCallback onDragStart;
-  final VoidCallback onDragEnd;
+class _WidgetTile extends StatelessWidget {
+  final WidgetNode node;
+  final double?   overrideX, overrideY;
+  final String?   selectedId;
+  final bool      locked;
 
-  const _DraggableNode({
+  const _WidgetTile({
     required super.key,
     required this.node,
-    required this.provider,
+    this.overrideX, this.overrideY,
+    required this.selectedId,
     required this.locked,
-    required this.scale,
-    required this.onDragStart,
-    required this.onDragEnd,
   });
 
   @override
-  State<_DraggableNode> createState() => _DraggableNodeState();
-}
-
-class _DraggableNodeState extends State<_DraggableNode> {
-  double _startNodeX = 0, _startNodeY = 0;
-  double _startPtrX  = 0, _startPtrY  = 0;
-  bool   _dragging   = false;
-
-  // Local position during drag (smooth — no provider notify)
-  double _lx = 0, _ly = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _lx = widget.node.x;
-    _ly = widget.node.y;
-  }
-
-  @override
-  void didUpdateWidget(covariant _DraggableNode old) {
-    super.didUpdateWidget(old);
-    // Sync local pos when NOT dragging (e.g. undo)
-    if (!_dragging) {
-      _lx = widget.node.x;
-      _ly = widget.node.y;
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final n = widget.node;
-    final p = widget.provider;
-    final isSelected = p.selectedId == n.id;
+    final x = overrideX ?? node.x;
+    final y = overrideY ?? node.y;
+    final isSelected = selectedId == node.id;
 
     return Positioned(
-      left: _lx, top: _ly,
-      width: n.width, height: n.height,
-      child: GestureDetector(
-        onTap: () {
-          if (!widget.locked && !n.locked) p.select(n.id);
-        },
-        onPanStart: (d) {
-          if (n.locked) return;
-          if (!widget.locked) p.select(n.id);
-          _dragging = true;
-          _startNodeX = n.x; _startNodeY = n.y;
-          _startPtrX  = d.globalPosition.dx;
-          _startPtrY  = d.globalPosition.dy;
-          widget.onDragStart();
-        },
-        onPanUpdate: (d) {
-          if (!_dragging || n.locked) return;
-          final sc = widget.scale.clamp(0.1, 5.0);
-          final dx = (d.globalPosition.dx - _startPtrX) / sc;
-          final dy = (d.globalPosition.dy - _startPtrY) / sc;
-
-          final screen = p.screen;
-          final nx = (_startNodeX + dx)
-              .clamp(0.0, screen.canvasWidth  - n.width);
-          final ny = (_startNodeY + dy)
-              .clamp(0.0, screen.canvasHeight - n.height);
-
-          // Update locally for smooth rendering
-          setState(() { _lx = nx; _ly = ny; });
-          // Update model silently (no notify)
-          p.moveNodeDirect(n.id, nx, ny);
-        },
-        onPanEnd: (_) {
-          if (!_dragging) return;
-          _dragging = false;
-          // Commit to history + save + notify
-          p.commitMove(n.id, _startNodeX, _startNodeY);
-          widget.onDragEnd();
-        },
-        onPanCancel: () {
-          if (!_dragging) return;
-          _dragging = false;
-          // Restore original position
-          setState(() { _lx = _startNodeX; _ly = _startNodeY; });
-          p.moveNodeDirect(n.id, _startNodeX, _startNodeY);
-          p.commitMove(n.id, _startNodeX, _startNodeY);
-          widget.onDragEnd();
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Widget content
-            SizedBox(
-              width: n.width, height: n.height,
-              child: IgnorePointer(child: WidgetRenderer(node: n)),
-            ),
-
-            // Selection highlight
-            if (isSelected && !widget.locked)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                          color: ForgeTheme.selection, width: 1.5),
-                    ),
-                  ),
-                ),
-              ),
-
-            // Locked badge
-            if (n.locked)
-              Positioned(
-                top: 3, right: 3,
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(4)),
-                  child: const Icon(Icons.lock,
-                      color: Colors.white, size: 9),
-                ),
-              ),
-          ],
+      left: x, top: y,
+      width: node.width, height: node.height,
+      child: Stack(clipBehavior: Clip.none, children: [
+        SizedBox(
+          width: node.width, height: node.height,
+          child: IgnorePointer(child: WidgetRenderer(node: node)),
         ),
-      ),
+        if (isSelected && !locked)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: ForgeTheme.selection, width: 1.5),
+                ),
+              ),
+            ),
+          ),
+        if (node.locked)
+          Positioned(top: 3, right: 3,
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(4)),
+              child: const Icon(Icons.lock, color: Colors.white, size: 9),
+            ),
+          ),
+      ]),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-//  _HandlesOverlay  — 8-point resize handles
-// ─────────────────────────────────────────────────────────────
-class _HandlesOverlay extends StatelessWidget {
-  final WidgetNode    node;
-  final ForgeProvider provider;
-  final double        scale;
-  final double        canvasW, canvasH;
-
-  const _HandlesOverlay({
-    required this.node, required this.provider,
-    required this.scale, required this.canvasW, required this.canvasH,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ForgeSelectionOverlay(
-      node: node, scale: scale,
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  Grid dots
+//  Grid
 // ─────────────────────────────────────────────────────────────
 class _GridWidget extends StatelessWidget {
   final double cellSize;
   const _GridWidget({required this.cellSize});
-
   @override
-  Widget build(BuildContext c) =>
-      CustomPaint(painter: _GridPainter(cellSize));
+  Widget build(BuildContext c) => CustomPaint(painter: _GridP(cellSize));
 }
 
-class _GridPainter extends CustomPainter {
+class _GridP extends CustomPainter {
   final double cell;
-  _GridPainter(this.cell);
-
+  _GridP(this.cell);
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = ForgeTheme.canvasGrid
-      ..strokeWidth = 0.6;
-    for (double x = 0; x < size.width; x += cell)
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    for (double y = 0; y < size.height; y += cell)
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+  void paint(Canvas c, Size s) {
+    final p = Paint()..color = ForgeTheme.canvasGrid..strokeWidth = 0.5;
+    for (double x = 0; x < s.width; x += cell)
+      c.drawLine(Offset(x, 0), Offset(x, s.height), p);
+    for (double y = 0; y < s.height; y += cell)
+      c.drawLine(Offset(0, y), Offset(s.width, y), p);
   }
-
   @override
-  bool shouldRepaint(_GridPainter old) => old.cell != cell;
+  bool shouldRepaint(_GridP o) => o.cell != cell;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -338,11 +354,15 @@ class _GridPainter extends CustomPainter {
 // ─────────────────────────────────────────────────────────────
 class _InfoBar extends StatelessWidget {
   final ForgeProvider p;
-  const _InfoBar({required this.p});
+  final String? dragId;
+  final Offset  nodePos;
+  const _InfoBar({required this.p, required this.dragId, required this.nodePos});
 
   @override
   Widget build(BuildContext context) {
     final n = p.selectedNode;
+    final double x = (dragId != null && n?.id == dragId) ? nodePos.dx : (n?.x ?? 0);
+    final double y = (dragId != null && n?.id == dragId) ? nodePos.dy : (n?.y ?? 0);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -351,7 +371,7 @@ class _InfoBar extends StatelessWidget {
       ),
       child: Text(
         n != null
-            ? '${n.displayName}  ${n.x.round()}, ${n.y.round()}  ${n.width.round()}×${n.height.round()}'
+            ? '${n.displayName}  ${x.round()},${y.round()}  ${n.width.round()}×${n.height.round()}'
             : '${p.screen.name}  ·  ${p.screen.nodes.length} widgets',
         style: const TextStyle(
             color: Colors.white, fontSize: 10, fontFamily: 'monospace'),
@@ -368,12 +388,11 @@ class _ZoomBar extends StatelessWidget {
   final ForgeProvider p;
   const _ZoomBar({required this.tc, required this.p});
 
-  void _zoom(double factor) {
-    final s = (tc.value.getMaxScaleOnAxis() * factor).clamp(0.1, 5.0);
+  void _zoom(double f) {
+    final s = (tc.value.getMaxScaleOnAxis() * f).clamp(0.1, 5.0);
     tc.value = Matrix4.identity()..scale(s);
     p.setScale(s);
   }
-
   void _reset() { tc.value = Matrix4.identity(); p.resetCanvas(); }
 
   @override
@@ -417,34 +436,34 @@ class _Zb extends StatelessWidget {
 class _LockBanner extends StatelessWidget {
   final VoidCallback onUnlock;
   const _LockBanner({required this.onUnlock});
-
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xCC1A1A2E),
+      color: const Color(0xDD1565C0),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top,
+          left: 14, right: 14, bottom: 8,
+        ),
         child: Row(children: [
-          const Icon(Icons.lock, color: Colors.yellowAccent, size: 14),
+          const Icon(Icons.lock, color: Colors.white, size: 14),
           const SizedBox(width: 8),
           const Expanded(
-            child: Text(
-              'Canvas locked — zoom/pan off, widgets draggable',
-              style: TextStyle(color: Colors.white70, fontSize: 11),
-            ),
+            child: Text('Preview — drag widgets freely',
+                style: TextStyle(color: Colors.white, fontSize: 12,
+                    fontWeight: FontWeight.w500)),
           ),
-          GestureDetector(
-            onTap: onUnlock,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.yellowAccent.withOpacity(0.6)),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: const Text('Unlock',
-                  style: TextStyle(color: Colors.yellowAccent,
-                      fontSize: 11, fontWeight: FontWeight.w700)),
+          TextButton(
+            onPressed: onUnlock,
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.white.withOpacity(0.2),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
+            child: const Text('Exit',
+                style: TextStyle(color: Colors.white,
+                    fontWeight: FontWeight.w700, fontSize: 12)),
           ),
         ]),
       ),

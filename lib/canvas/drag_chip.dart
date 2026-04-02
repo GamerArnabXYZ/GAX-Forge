@@ -48,7 +48,7 @@ class _DraggableWidgetChipState extends State<DraggableWidgetChip> {
             y: screen.canvasHeight / 4,
           );
           if (MediaQuery.of(context).size.width <= 900) {
-            provider.setSidePanel(1);
+            provider.setSidePanel(0);
           }
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('${widget.type.name} added ✓'),
