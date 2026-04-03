@@ -89,7 +89,7 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
     _dragStartPtrX  = e.position.dx;
     _dragStartPtrY  = e.position.dy;
     _nodeDisplayPos = Offset(hit.x, hit.y);
-    if (!p.canvasLocked) p.select(hit.id);
+    p.select(hit.id)  // select always — needed for resize in lock mode;
     // Disable IV pan immediately (synchronous, before any frame)
     if (mounted) setState(() {});
   }
@@ -170,8 +170,8 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                 minScale: 0.1,
                 maxScale: 5.0,
                 // CRITICAL: Disable when dragging OR locked
-                panEnabled:   !isDragging && !locked,
-                scaleEnabled: !locked,
+                panEnabled:   !isDragging,  // always allow pan (locked or not)
+                scaleEnabled: true,           // always allow zoom
                 onInteractionUpdate: (_) =>
                     p.setScale(_tc.value.getMaxScaleOnAxis()),
                 child: Center(
@@ -218,7 +218,8 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                         ),
 
                         // Selection handles — outside clip
-                        if (!locked && p.selectedId != null)
+                        // Show handles always — resize works in both modes
+                        if (p.selectedId != null)
                           _buildHandles(p),
                       ],
                     ),
@@ -235,10 +236,7 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
                 Positioned(right: 8, bottom: 8,
                     child: _ZoomBar(tc: _tc, p: p)),
 
-              // Lock banner
-              if (locked)
-                Positioned(top: 0, left: 0, right: 0,
-                    child: _LockBanner(onUnlock: p.toggleCanvasLock)),
+
             ]),
           ),
         );
@@ -430,43 +428,3 @@ class _Zb extends StatelessWidget {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-//  Lock banner
-// ─────────────────────────────────────────────────────────────
-class _LockBanner extends StatelessWidget {
-  final VoidCallback onUnlock;
-  const _LockBanner({required this.onUnlock});
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xDD1565C0),
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top,
-          left: 14, right: 14, bottom: 8,
-        ),
-        child: Row(children: [
-          const Icon(Icons.lock, color: Colors.white, size: 14),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Text('Preview — drag widgets freely',
-                style: TextStyle(color: Colors.white, fontSize: 12,
-                    fontWeight: FontWeight.w500)),
-          ),
-          TextButton(
-            onPressed: onUnlock,
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.2),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: const Text('Exit',
-                style: TextStyle(color: Colors.white,
-                    fontWeight: FontWeight.w700, fontSize: 12)),
-          ),
-        ]),
-      ),
-    );
-  }
-}

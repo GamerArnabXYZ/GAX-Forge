@@ -74,11 +74,11 @@ class _BuilderAppBar extends StatelessWidget implements PreferredSizeWidget {
               onPressed: provider.canRedo ? provider.redo : null,
             ),
 
-            // 🔒 Lock button — locks canvas pan/zoom, widgets stay draggable
+            // 🔒 Lock button
             Tooltip(
               message: provider.canvasLocked
-                  ? 'Canvas locked — tap to unlock'
-                  : 'Lock canvas (widgets still moveable)',
+                  ? 'Unlock'
+                  : 'Lock (preview mode)',
               child: IconButton(
                 icon: Icon(
                   provider.canvasLocked
@@ -159,8 +159,6 @@ class _WideLayout extends StatelessWidget {
         children: [
           const ScreenTabBar(),
           // Lock banner
-          if (provider.canvasLocked)
-            _LockBanner(onUnlock: provider.toggleCanvasLock),
           Expanded(
             child: Row(
               children: [
@@ -178,51 +176,6 @@ class _WideLayout extends StatelessWidget {
   }
 }
 
-// ── Lock Banner ───────────────────────────────────────────────
-class _LockBanner extends StatelessWidget {
-  final VoidCallback onUnlock;
-  const _LockBanner({required this.onUnlock});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      color: const Color(0xFF1A1A2E),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        children: [
-          const Icon(Icons.lock_rounded,
-              color: Colors.yellowAccent, size: 14),
-          const SizedBox(width: 8),
-          const Text(
-            'Canvas Locked — pan/zoom off, widgets freely draggable',
-            style: TextStyle(
-                color: Colors.white70, fontSize: 11),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: onUnlock,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 3),
-              decoration: BoxDecoration(
-                color: Colors.yellowAccent.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                    color: Colors.yellowAccent.withOpacity(0.5)),
-              ),
-              child: const Text('Unlock',
-                  style: TextStyle(
-                      color: Colors.yellowAccent,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ── Vertical Palette ──────────────────────────────────────────
 class _VerticalPalette extends StatelessWidget {
@@ -348,8 +301,6 @@ class _MobileLayout extends StatelessWidget {
       builder: (context, provider, _) => Column(
         children: [
           const ScreenTabBar(),
-          if (provider.canvasLocked)
-            _LockBanner(onUnlock: provider.toggleCanvasLock),
           Expanded(
             child: IndexedStack(
               index: provider.activeSidePanel,
