@@ -89,7 +89,7 @@ class _ForgeCanvasState extends State<ForgeCanvas> {
     _dragStartPtrX  = e.position.dx;
     _dragStartPtrY  = e.position.dy;
     _nodeDisplayPos = Offset(hit.x, hit.y);
-    p.select(hit.id)  // select always — needed for resize in lock mode;
+    p.select(hit.id); // select always — needed for resize in lock mode
     // Disable IV pan immediately (synchronous, before any frame)
     if (mounted) setState(() {});
   }
