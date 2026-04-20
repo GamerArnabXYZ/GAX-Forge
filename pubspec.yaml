@@ -13,9 +13,6 @@ dependencies:
   # State Management
   flutter_riverpod: ^2.4.9
 
-  # Multi-touch Gestures
-  matrix_gesture_detector: ^1.0.0
-
   # Code Formatting
   dart_style: ^2.3.2
 
@@ -41,6 +38,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  assets:
-    - assets/
-    - assets/icons/
+  # Assets for web
+  # assets:
+  #   - assets/
+  #   - assets/icons/
