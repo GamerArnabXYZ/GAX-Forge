@@ -130,7 +130,7 @@ class _WidgetTreeItem extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : null,
+          color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.1) : null,
           border: Border(
             left: BorderSide(
               color: isSelected ? AppTheme.primaryColor : Colors.transparent,
@@ -145,7 +145,7 @@ class _WidgetTreeItem extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: _getColorForType(widget.type).withOpacity(0.2),
+                color: _getColorForType(widget.type).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(

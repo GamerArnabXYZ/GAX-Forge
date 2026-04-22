@@ -79,7 +79,7 @@ class _ExportBottomSheetState extends ConsumerState<ExportBottomSheet> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(Icons.code, color: AppTheme.primaryColor),

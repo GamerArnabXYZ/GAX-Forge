@@ -42,7 +42,7 @@ class AppTheme {
           color: Colors.black87,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -58,7 +58,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: lightSurfaceVariant.withOpacity(0.5),
+        fillColor: lightSurfaceVariant.withValues(alpha: 0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -82,7 +82,7 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: lightSurfaceVariant,
-        selectedColor: primaryColor.withOpacity(0.2),
+        selectedColor: primaryColor.withValues(alpha: 0.2),
         labelStyle: GoogleFonts.poppins(fontSize: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -113,7 +113,7 @@ class AppTheme {
           color: Colors.white,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
         color: darkSurfaceVariant,
         shape: RoundedRectangleBorder(
@@ -130,7 +130,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: darkSurfaceVariant.withOpacity(0.5),
+        fillColor: darkSurfaceVariant.withValues(alpha: 0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -154,7 +154,7 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: darkSurfaceVariant,
-        selectedColor: primaryColor.withOpacity(0.3),
+        selectedColor: primaryColor.withValues(alpha: 0.3),
         labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.white),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -173,5 +173,5 @@ class CanvasColors {
   static const Color widgetBorder = Color(0xFFBDBDBD);
   static const Color widgetBorderDark = Color(0xFF616161);
   static const Color deviceFrame = Color(0xFF1A1A1A);
-  static const Color deviceScreen = Colors.WHITE;
+  static const Color deviceScreen = Color(0xFFFFFFFF);
 }

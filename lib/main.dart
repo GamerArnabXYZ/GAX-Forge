@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'screens/screens.dart';
 import 'theme/app_theme.dart';
+import 'providers/providers.dart';
 
 /// Gax Forge - Flutter UI Builder App
 /// A drag-drop UI designer for Flutter applications
@@ -47,7 +48,3 @@ class GaxForgeApp extends ConsumerWidget {
     );
   }
 }
-
-/// Theme provider import for main.dart
-/// Note: This is imported from providers.dart
-import 'providers/providers.dart';
