@@ -11,9 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # State Management
+  # State Management (manual StateNotifier, no codegen needed)
   flutter_riverpod: ^2.5.1
-  riverpod_annotation: ^2.3.5
   
   # Local Storage
   hive_flutter: ^1.1.0
@@ -24,11 +23,7 @@ dependencies:
   
   # UI Utilities
   uuid: ^4.4.0
-  google_fonts: ^6.2.1
   flutter_colorpicker: ^1.1.0
-  
-  # Icons
-  material_design_icons_flutter: ^7.0.7296
 
 dev_dependencies:
   flutter_test:
@@ -36,7 +31,6 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   build_runner: ^2.4.9
   hive_generator: ^2.0.1
-  riverpod_generator: ^2.4.3
 
 flutter:
   uses-material-design: true
