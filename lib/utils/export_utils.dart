@@ -415,7 +415,6 @@ ${indent})''';
 
     for (final screen in screens) {
       final snake = _toSnakeCase(screen.name);
-      final cls = _toClassName(screen.name);
       buffer.writeln("import '${snake}_screen.dart';");
     }
 

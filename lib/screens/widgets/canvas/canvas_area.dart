@@ -177,7 +177,6 @@ class _DraggableWidget extends StatefulWidget {
 }
 
 class _DraggableWidgetState extends State<_DraggableWidget> {
-  double? _startX, _startY;
   double _resizeStartW = 0, _resizeStartH = 0;
 
   @override
@@ -205,7 +204,7 @@ class _DraggableWidgetState extends State<_DraggableWidget> {
                 widget.onMove(details.delta.dx, details.delta.dy);
               },
         child: Stack(
-          clipBehavior: Clip.visible,
+          clipBehavior: Clip.hardEdge,
           children: [
             // ── Selection border ──
             if (widget.isSelected && !widget.isPreview)

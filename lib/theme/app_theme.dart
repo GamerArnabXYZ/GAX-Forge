@@ -22,7 +22,7 @@ class AppTheme {
             statusBarIconBrightness: Brightness.dark,
           ),
         ),
-        cardTheme: CardThemeData(
+        cardTheme: CardTheme(
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -73,7 +73,7 @@ class AppTheme {
             statusBarIconBrightness: Brightness.light,
           ),
         ),
-        cardTheme: CardThemeData(
+        cardTheme: CardTheme(
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

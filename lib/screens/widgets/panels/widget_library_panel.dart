@@ -310,7 +310,7 @@ class _WidgetTile extends StatelessWidget {
       case 'BottomNavigationBar': return Icons.navigation_rounded;
       case 'TabBar': return Icons.tab_rounded;
       case 'NavigationDrawer': return Icons.menu_rounded;
-      case 'NavigationBar': return Icons.bottom_navigation_rounded;
+      case 'NavigationBar': return Icons.smart_screen_rounded;
       case 'AlertDialog': return Icons.warning_rounded;
       case 'SnackBar': return Icons.announcement_rounded;
       case 'BottomSheet': return Icons.upload_rounded;
