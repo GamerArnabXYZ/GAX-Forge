@@ -140,8 +140,7 @@ class CanvasWidgetRenderer extends StatelessWidget {
           child: Center(
             child: IconButton(
               icon: Icon(
-                IconData(p['iconCode'] as int? ?? 0xe318,
-                    fontFamily: 'MaterialIcons'),
+                _safeIcon(p['iconCode'] as int?, Icons.star_rounded),
                 color: color('color'),
               ),
               onPressed: () {},
@@ -157,8 +156,7 @@ class CanvasWidgetRenderer extends StatelessWidget {
                   backgroundColor: color('color'),
                   onPressed: () {},
                   child: Icon(
-                    IconData(p['iconCode'] as int? ?? 0xe145,
-                        fontFamily: 'MaterialIcons'),
+                    _safeIcon(p['iconCode'] as int?, Icons.add_rounded),
                     color: color('iconColor', 0xFFFFFFFF),
                   ),
                 )
@@ -166,8 +164,7 @@ class CanvasWidgetRenderer extends StatelessWidget {
                   backgroundColor: color('color'),
                   onPressed: () {},
                   child: Icon(
-                    IconData(p['iconCode'] as int? ?? 0xe145,
-                        fontFamily: 'MaterialIcons'),
+                    _safeIcon(p['iconCode'] as int?, Icons.add_rounded),
                     color: color('iconColor', 0xFFFFFFFF),
                   ),
                 ),
@@ -235,8 +232,7 @@ class CanvasWidgetRenderer extends StatelessWidget {
           height: widgetProp.height,
           child: Center(
             child: Icon(
-              IconData(p['iconCode'] as int? ?? 0xe318,
-                  fontFamily: 'MaterialIcons'),
+              _safeIcon(p['iconCode'] as int?, Icons.star_rounded),
               color: color('color'),
               size: dbl('size', 32),
             ),
@@ -350,8 +346,7 @@ class CanvasWidgetRenderer extends StatelessWidget {
           color: color('color', 0xFFFFFFFF),
           child: ListTile(
             leading: Icon(
-              IconData(p['leadingIcon'] as int? ?? 0xe318,
-                  fontFamily: 'MaterialIcons'),
+              _safeIcon(p['leadingIcon'] as int?, Icons.star_rounded),
             ),
             title: Text(str('title', 'List Item'),
                 style: TextStyle(color: color('textColor', 0xFF000000))),
@@ -651,4 +646,47 @@ class _LayoutHint extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Safe icon lookup — avoids runtime IconData (tree-shake safe) ────────────
+IconData _safeIcon(int? codePoint, IconData fallback) {
+  if (codePoint == null) return fallback;
+  // Map common Material codepoints to const Icons
+  const Map<int, IconData> _known = {
+    0xe318: Icons.star_rounded,
+    0xe145: Icons.add_rounded,
+    0xe3af: Icons.image_rounded,
+    0xe88a: Icons.home_rounded,
+    0xe5c4: Icons.arrow_back_rounded,
+    0xe5d2: Icons.arrow_forward_rounded,
+    0xe876: Icons.check_rounded,
+    0xe5cd: Icons.close_rounded,
+    0xe3b4: Icons.info_rounded,
+    0xe88e: Icons.settings_rounded,
+    0xe7fd: Icons.person_rounded,
+    0xe0be: Icons.email_rounded,
+    0xe61c: Icons.phone_rounded,
+    0xe0b0: Icons.lock_rounded,
+    0xe0c8: Icons.visibility_rounded,
+    0xe8b6: Icons.search_rounded,
+    0xe148: Icons.edit_rounded,
+    0xe872: Icons.delete_rounded,
+    0xe5d3: Icons.menu_rounded,
+    0xe5c3: Icons.more_vert_rounded,
+    0xe5d4: Icons.notifications_rounded,
+    0xe8b8: Icons.share_rounded,
+    0xe2c7: Icons.favorite_rounded,
+    0xe8dc: Icons.star,
+    0xe838: Icons.bookmark_rounded,
+    0xe0af: Icons.download_rounded,
+    0xe2c4: Icons.upload_rounded,
+    0xe1db: Icons.folder_rounded,
+    0xe24d: Icons.attach_file_rounded,
+    0xe1bc: Icons.camera_rounded,
+    0xe04b: Icons.play_arrow_rounded,
+    0xe047: Icons.pause_rounded,
+    0xe5db: Icons.refresh_rounded,
+    0xe8b5: Icons.send_rounded,
+  };
+  return _known[codePoint] ?? fallback;
 }

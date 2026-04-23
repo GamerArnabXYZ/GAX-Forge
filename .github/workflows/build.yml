@@ -40,10 +40,11 @@ jobs:
         run: |
           flutter build apk --release \
             --split-per-abi \
+            --no-tree-shake-icons \
             --target-platform android-arm,android-arm64,android-x64
 
       - name: Build universal APK
-        run: flutter build apk --release
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Get version
         id: version
