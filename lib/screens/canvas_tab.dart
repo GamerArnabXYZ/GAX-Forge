@@ -406,7 +406,7 @@ class _CanvasWidgetWrapper extends StatelessWidget {
                 height: widgetModel.size.height,
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: isSelected ? AppTheme.selectionBorder : Colors.grey.shade300,
+                    color: isSelected ? CanvasColors.selectionBorder : Colors.grey.shade300,
                     width: isSelected ? 2 : 1,
                   ),
                   borderRadius: BorderRadius.circular(4),
@@ -528,7 +528,7 @@ class _CanvasWidgetWrapper extends StatelessWidget {
               width: 20,
               height: 20,
               decoration: BoxDecoration(
-                color: AppTheme.selection,
+                color: CanvasColors.selection,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Icon(

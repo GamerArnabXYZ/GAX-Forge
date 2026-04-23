@@ -20,10 +20,15 @@ class ProjectStorage {
         fileName: fileName,
         type: FileType.custom,
         allowedExtensions: ['json'],
-        bytes: utf8.encode(jsonContent),
       );
 
-      return result;
+      if (result != null) {
+        final file = File(result);
+        await file.writeAsString(jsonContent);
+        return result;
+      }
+
+      return null;
     } catch (e) {
       print('Error exporting project: $e');
       return null;
@@ -39,8 +44,8 @@ class ProjectStorage {
         allowedExtensions: ['json'],
       );
 
-      if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
+      if (result != null && result.files.isNotEmpty && result.files.first.path != null) {
+        final file = File(result.files.first.path!);
         final content = await file.readAsString();
         final json = jsonDecode(content) as Map<String, dynamic>;
         return ProjectModel.fromJson(json);
@@ -63,10 +68,15 @@ class ProjectStorage {
         fileName: fileName,
         type: FileType.custom,
         allowedExtensions: ['dart'],
-        bytes: utf8.encode(code),
       );
 
-      return result;
+      if (result != null) {
+        final file = File(result);
+        await file.writeAsString(code);
+        return result;
+      }
+
+      return null;
     } catch (e) {
       print('Error exporting dart code: $e');
       return null;

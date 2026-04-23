@@ -54,7 +54,7 @@ IconData getIconForWidgetType(WidgetType type) {
     case WidgetType.textButton:
       return Icons.text_fields;
     case WidgetType.outlinedButton:
-      return Icons.border_button;
+      return Icons.check_box_outline_blank;
     case WidgetType.card:
       return Icons.credit_card;
     case WidgetType.containerDecorated:

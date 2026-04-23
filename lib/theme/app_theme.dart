@@ -42,7 +42,7 @@ class AppTheme {
           color: Colors.black87,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -113,7 +113,7 @@ class AppTheme {
           color: Colors.white,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
         color: darkSurfaceVariant,
         shape: RoundedRectangleBorder(
@@ -173,5 +173,5 @@ class CanvasColors {
   static const Color widgetBorder = Color(0xFFBDBDBD);
   static const Color widgetBorderDark = Color(0xFF616161);
   static const Color deviceFrame = Color(0xFF1A1A1A);
-  static const Color deviceScreen = Colors.WHITE;
+  static const Color deviceScreen = Color(0xFFFFFFFF);
 }
