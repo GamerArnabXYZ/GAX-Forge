@@ -194,10 +194,7 @@ class _DraggableWidgetState extends State<_DraggableWidget> {
             : () => _showContextMenu(context),
         onPanStart: widget.isLocked
             ? null
-            : (details) {
-                _startX = w.x;
-                _startY = w.y;
-              },
+            : (details) {},
         onPanUpdate: widget.isLocked
             ? null
             : (details) {

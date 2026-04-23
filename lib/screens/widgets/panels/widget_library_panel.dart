@@ -297,7 +297,7 @@ class _WidgetTile extends StatelessWidget {
       case 'LinearProgressIndicator': return Icons.bar_chart_rounded;
       case 'CircularProgressIndicator': return Icons.donut_large_rounded;
       case 'Tooltip': return Icons.info_rounded;
-      case 'Placeholder': return Icons.crop_5_4_rounded;
+      case 'Placeholder': return Icons.crop_landscape_rounded;
       case 'Column': return Icons.view_column_rounded;
       case 'Row': return Icons.view_week_rounded;
       case 'Stack': return Icons.layers_rounded;
@@ -310,7 +310,7 @@ class _WidgetTile extends StatelessWidget {
       case 'BottomNavigationBar': return Icons.navigation_rounded;
       case 'TabBar': return Icons.tab_rounded;
       case 'NavigationDrawer': return Icons.menu_rounded;
-      case 'NavigationBar': return Icons.smart_screen_rounded;
+      case 'NavigationBar': return Icons.dock_rounded;
       case 'AlertDialog': return Icons.warning_rounded;
       case 'SnackBar': return Icons.announcement_rounded;
       case 'BottomSheet': return Icons.upload_rounded;
@@ -320,7 +320,7 @@ class _WidgetTile extends StatelessWidget {
       case 'SingleChildScrollView': return Icons.swap_vert_rounded;
       case 'CustomScrollView': return Icons.view_day_rounded;
       case 'PageView': return Icons.auto_stories_rounded;
-      case 'TabBarView': return Icons.tab_unselected_rounded;
+      case 'TabBarView': return Icons.table_rows_rounded;
       default: return Icons.widgets_rounded;
     }
   }
