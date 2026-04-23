@@ -1,85 +1,108 @@
-# Gax Forge
+# GAX Forge 🔧
+### Professional Flutter UI Design Maker
+**by ArnabLabZ Studio**
 
-A Flutter UI Builder App - Design Flutter screens with drag and drop widgets.
+---
 
-## Features
+## 📁 Project Structure
 
-- 🎨 **Drag & Drop Widgets** - 30+ ready-made Flutter widgets
-- ✏️ **Property Editor** - Edit widget properties with live preview
-- 📱 **Device Preview** - Pixel 6, iPhone, Samsung support
-- 📋 **Code Export** - Generate working Dart code
-- 🌙 **Dark Mode** - Material 3 design
-- 💾 **Project Save/Load** - Persistent storage
+```
+gax_forge/
+├── lib/
+│   ├── main.dart                          # App entry point (Hive + Riverpod init)
+│   ├── theme/
+│   │   └── app_theme.dart                 # Material 3 light/dark themes
+│   ├── models/
+│   │   ├── app_models.dart               # GaxProject, CanvasScreen, WidgetProperty, WidgetCatalog
+│   │   └── app_models.g.dart             # Hive TypeAdapters (pre-generated)
+│   ├── providers/
+│   │   └── project_provider.dart         # Riverpod StateNotifiers (projects + editor state)
+│   ├── screens/
+│   │   ├── home/
+│   │   │   ├── home_screen.dart          # Dashboard with search, grid/list, drawer
+│   │   │   └── widgets/
+│   │   │       ├── project_card.dart     # Project card (grid + list modes)
+│   │   │       └── create_project_dialog.dart  # New project dialog with color picker
+│   │   ├── editor/
+│   │   │   └── editor_screen.dart        # Main editor: AppBar, BottomNav, screen switcher
+│   │   └── widgets/
+│   │       ├── canvas/
+│   │       │   ├── canvas_area.dart      # InteractiveViewer + drag/resize/selection
+│   │       │   └── canvas_widget_renderer.dart  # Renders all 40+ widget types
+│   │       └── panels/
+│   │           ├── widget_library_panel.dart    # Categorized widget picker
+│   │           └── properties_panel.dart        # Widget property editor
+│   └── utils/
+│       └── export_utils.dart             # Dart code generator + file sharing
+├── android/
+│   └── app/src/main/
+│       ├── AndroidManifest.xml
+│       └── res/xml/file_paths.xml
+├── .github/workflows/
+│   └── build.yml                         # GitHub Actions CI/CD → APK releases
+└── pubspec.yaml
+```
 
-## Screenshots
+---
 
-Coming soon...
+## 🚀 Setup & Build
 
-## Getting Started
-
+### 1. Clone & Install
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/gax_forge.git
-
-# Navigate to project
+git clone https://github.com/GamerArnabXYZ/gax-forge
 cd gax_forge
-
-# Get dependencies
 flutter pub get
+```
 
-# Run the app
+### 2. Generate Hive Adapters
+```bash
+flutter pub run build_runner build --delete-conflicting-outputs
+```
+
+### 3. Run
+```bash
 flutter run
 ```
 
-## Building
-
-### Android
+### 4. Build APK
 ```bash
-# Debug APK
-flutter build apk --debug
-
-# Release APK
-flutter build apk --release
+flutter build apk --release --split-per-abi
 ```
 
-### Web
-```bash
-flutter build web --release
-```
+---
 
-## CI/CD
+## 🔧 Tech Stack
 
-This project uses GitHub Actions for automated builds:
+| Layer | Package |
+|-------|---------|
+| State Management | `flutter_riverpod 2.x` |
+| Local Storage | `hive_flutter` |
+| Code Export | `path_provider` + `share_plus` |
+| Color Picker | `flutter_colorpicker` |
+| UI | Material 3 |
 
-- **Android Build**: Builds debug and release APKs on push/PR
-- **Web Build**: Builds and deploys web app
-- **Tests**: Runs Flutter analyze and tests
+---
 
-## Project Structure
+## 📱 Features
 
-```
-lib/
-├── main.dart
-├── models/           # Data models
-├── providers/         # State management (Riverpod)
-├── screens/           # UI screens
-├── widgets/           # Custom widgets
-├── utils/             # Utilities
-└── theme/             # App theme
-```
+- **40+ Widgets** across 8 categories
+- **Multi-screen** project support
+- **Drag & Drop** on canvas with pinch-to-zoom
+- **Canvas Lock** for precise widget editing
+- **Properties Panel** — color, size, text, radius, etc.
+- **Undo / Redo** (30 levels)
+- **Preview Mode** — clean UI without editor chrome
+- **Export to Dart** — generates complete `.dart` files
+- **Hive Storage** — fast, offline, no internet needed
+- **Material 3** — light + dark theme
 
-## Contributing
+---
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## ☁️ CI/CD
 
-## License
+Push to `main` → GitHub Actions builds and releases APKs automatically.
+No manual build steps needed from mobile.
 
-This project is licensed under the MIT License.
+---
 
-## Support
-
-For bugs and feature requests, please use GitHub Issues.
+*Made with ❤️ by ArnabLabZ Studio*

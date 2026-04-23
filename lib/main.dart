@@ -1,19 +1,39 @@
+// lib/main.dart
+// GAX Forge - Entry Point
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'screens/screens.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'models/app_models.dart';
+import 'screens/home/home_screen.dart';
 import 'theme/app_theme.dart';
-import 'providers/providers.dart';
 
-/// Gax Forge - Flutter UI Builder App
-/// A drag-drop UI designer for Flutter applications
-///
-/// Features:
-/// - Drag and drop widgets to design screens
-/// - Edit widget properties with live preview
-/// - Export working Dart code
-/// - Save and load projects
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
+  // Force portrait orientation
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  // Transparent status bar
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+  ));
+
+  // Init Hive
+  await Hive.initFlutter();
+
+  // Register adapters
+  Hive.registerAdapter(WidgetPropertyAdapter());
+  Hive.registerAdapter(CanvasScreenAdapter());
+  Hive.registerAdapter(GaxProjectAdapter());
+
+  // Open boxes
+  await Hive.openBox<GaxProject>('projects');
+
   runApp(
     const ProviderScope(
       child: GaxForgeApp(),
@@ -21,30 +41,18 @@ void main() {
   );
 }
 
-/// Main application widget
 class GaxForgeApp extends ConsumerWidget {
   const GaxForgeApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeProvider);
-
     return MaterialApp(
-      title: 'Gax Forge',
+      title: 'GAX Forge',
       debugShowCheckedModeBanner: false,
-
-      // Theme configuration
-      theme: AppTheme.lightTheme(),
-      darkTheme: AppTheme.darkTheme(),
-      themeMode: themeMode,
-
-      // Initial screen
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
       home: const HomeScreen(),
-
-      // Route configuration
-      routes: {
-        '/home': (context) => const HomeScreen(),
-      },
     );
   }
 }
