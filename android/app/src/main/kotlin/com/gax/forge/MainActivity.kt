@@ -1,4 +1,4 @@
-package com.example.gax_forge
+package com.gax.forge
 
 import io.flutter.embedding.android.FlutterActivity
 
