@@ -566,6 +566,7 @@ class CodeGenerator {
   /// Generate Column code
   static String _generateColumnCode(CanvasWidgetModel widget, List<CanvasWidgetModel> allWidgets, int indent) {
     final indentStr = '  ' * indent;
+    final childIndent = '  ' * (indent + 1);
     final props = widget.properties;
 
     final mainAxisAlign = _mainAxisAlignFromString(props['mainAxisAlignment'] ?? 'start');
@@ -599,6 +600,7 @@ class CodeGenerator {
   /// Generate Stack code
   static String _generateStackCode(CanvasWidgetModel widget, List<CanvasWidgetModel> allWidgets, int indent) {
     final indentStr = '  ' * indent;
+    final childIndent = '  ' * (indent + 1);
 
     // Get children
     final children = allWidgets.where((w) => w.parentId == widget.id).toList();
@@ -624,6 +626,7 @@ class CodeGenerator {
   /// Generate Wrap code
   static String _generateWrapCode(CanvasWidgetModel widget, List<CanvasWidgetModel> allWidgets, int indent) {
     final indentStr = '  ' * indent;
+    final childIndent = '  ' * (indent + 1);
 
     // Get children
     final children = allWidgets.where((w) => w.parentId == widget.id).toList();
@@ -649,6 +652,7 @@ class CodeGenerator {
   /// Generate Padding code
   static String _generatePaddingCode(CanvasWidgetModel widget, List<CanvasWidgetModel> allWidgets, int indent) {
     final indentStr = '  ' * indent;
+    final childIndent = '  ' * (indent + 1);
     final props = widget.properties;
 
     final padding = props['padding'] ?? 16.0;
@@ -677,6 +681,7 @@ class CodeGenerator {
   /// Generate Center code
   static String _generateCenterCode(CanvasWidgetModel widget, List<CanvasWidgetModel> allWidgets, int indent) {
     final indentStr = '  ' * indent;
+    final childIndent = '  ' * (indent + 1);
 
     // Get children
     final children = allWidgets.where((w) => w.parentId == widget.id).toList();
@@ -700,6 +705,7 @@ class CodeGenerator {
   /// Generate Expanded code
   static String _generateExpandedCode(CanvasWidgetModel widget, List<CanvasWidgetModel> allWidgets, int indent) {
     final indentStr = '  ' * indent;
+    final childIndent = '  ' * (indent + 1);
 
     // Get children
     final children = allWidgets.where((w) => w.parentId == widget.id).toList();
@@ -723,6 +729,7 @@ class CodeGenerator {
   /// Generate Flexible code
   static String _generateFlexibleCode(CanvasWidgetModel widget, List<CanvasWidgetModel> allWidgets, int indent) {
     final indentStr = '  ' * indent;
+    final childIndent = '  ' * (indent + 1);
 
     // Get children
     final children = allWidgets.where((w) => w.parentId == widget.id).toList();

@@ -51,8 +51,8 @@ class PropertyEditor extends ConsumerWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primaryColor.withValues(alpha: 0.1),
-            AppTheme.secondaryColor.withValues(alpha: 0.1),
+            AppTheme.primaryColor.withOpacity(0.1),
+            AppTheme.secondaryColor.withOpacity(0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(12),
@@ -62,7 +62,7 @@ class PropertyEditor extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
+              color: AppTheme.primaryColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -241,6 +241,8 @@ class PropertyEditor extends ConsumerWidget {
 
   /// Text properties
   Widget _buildTextProperties(BuildContext context, WidgetRef ref) {
+    final props = widgetModel.properties;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -258,6 +260,8 @@ class PropertyEditor extends ConsumerWidget {
 
   /// Container properties
   Widget _buildContainerProperties(BuildContext context, WidgetRef ref) {
+    final props = widgetModel.properties;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -335,7 +339,7 @@ class PropertyEditor extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.1),
+        color: Colors.grey.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -518,7 +522,7 @@ class PropertyEditor extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () {
-              final hex = '#${selectedColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+              final hex = '#${selectedColor.value.toRadixString(16).substring(2).toUpperCase()}';
               ref.read(canvasProvider.notifier).updateWidgetProperty(widgetModel.id, property, hex);
               Navigator.pop(context);
             },

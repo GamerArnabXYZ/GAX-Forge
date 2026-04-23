@@ -18,7 +18,7 @@ class WidgetLibraryItemCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -34,7 +34,7 @@ class WidgetLibraryItemCard extends ConsumerWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: _getCategoryColor(item.category).withValues(alpha: 0.1),
+                  color: _getCategoryColor(item.category).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -124,7 +124,7 @@ class CanvasWidgetWrapper extends ConsumerWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: Colors.purple.withValues(alpha: 0.3),
+                        color: Colors.purple.withOpacity(0.3),
                         width: 2,
                       ),
                       borderRadius: BorderRadius.circular(4),
