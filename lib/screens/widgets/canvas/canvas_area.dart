@@ -17,8 +17,8 @@ class CanvasArea extends ConsumerStatefulWidget {
 
 class _CanvasAreaState extends ConsumerState<CanvasArea> {
   final TransformationController _transformCtrl = TransformationController();
-  static const double _canvasW = 390.0; // iPhone 15 width
-  static const double _canvasH = 844.0; // iPhone 15 height
+  static const double _canvasW = 390.0;
+  static const double _canvasH = 844.0;
 
   @override
   void dispose() {
@@ -57,7 +57,7 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                 color: bgColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
+                    color: Colors.black.withValues(alpha: 0.25),
                     blurRadius: 24,
                     spreadRadius: 4,
                   ),
@@ -65,7 +65,7 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                 border: isPreview
                     ? null
                     : Border.all(
-                        color: scheme.outline.withOpacity(0.5),
+                        color: scheme.outline.withValues(alpha: 0.5),
                         width: 1,
                       ),
               ),
@@ -86,7 +86,8 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: scheme.surfaceContainerHighest.withOpacity(0.8),
+                          color: scheme.surfaceContainerHighest
+                              .withValues(alpha: 0.8),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -129,8 +130,7 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
         scheme: scheme,
         onTap: () {
           if (editor.canvasLocked) {
-            notifier.selectWidget(
-                isSelected ? null : widget.id);
+            notifier.selectWidget(isSelected ? null : widget.id);
           }
         },
         onMove: (dx, dy) => notifier.moveWidget(widget.id, dx, dy),
@@ -177,31 +177,30 @@ class _DraggableWidget extends StatefulWidget {
 }
 
 class _DraggableWidgetState extends State<_DraggableWidget> {
-  double _resizeStartW = 0, _resizeStartH = 0;
+  // FIX: Track resize origin properly using delta accumulation
+  double _resizeBaseW = 0;
+  double _resizeBaseH = 0;
 
   @override
   Widget build(BuildContext context) {
     final w = widget.widgetProp;
-    final isEditable = widget.isLocked; // Can interact when locked
 
     return Positioned(
       left: w.x,
       top: w.y,
       child: GestureDetector(
         onTap: widget.onTap,
-        onLongPress: isEditable
+        onLongPress: widget.isLocked
             ? null
             : () => _showContextMenu(context),
-        onPanStart: widget.isLocked
-            ? null
-            : (details) {},
+        // Drag to move: only when canvas NOT locked
         onPanUpdate: widget.isLocked
             ? null
             : (details) {
                 widget.onMove(details.delta.dx, details.delta.dy);
               },
         child: Stack(
-          clipBehavior: Clip.hardEdge,
+          clipBehavior: Clip.visible,
           children: [
             // ── Selection border ──
             if (widget.isSelected && !widget.isPreview)
@@ -257,27 +256,35 @@ class _DraggableWidgetState extends State<_DraggableWidget> {
                   onTap: widget.onBringFront,
                 ),
               ),
-              // Bottom-right: resize handle
+              // Bottom-right: resize handle — FIX: use delta accumulation
               Positioned(
-                bottom: -8,
-                right: -8,
+                bottom: -10,
+                right: -10,
                 child: GestureDetector(
-                  onPanStart: (d) {
-                    _resizeStartW = w.width;
-                    _resizeStartH = w.height;
+                  onPanStart: (_) {
+                    _resizeBaseW = w.width;
+                    _resizeBaseH = w.height;
                   },
                   onPanUpdate: (d) {
+                    _resizeBaseW += d.delta.dx;
+                    _resizeBaseH += d.delta.dy;
                     widget.onResize(
-                      (_resizeStartW + d.localPosition.dx).clamp(40, 800),
-                      (_resizeStartH + d.localPosition.dy).clamp(20, 800),
+                      _resizeBaseW.clamp(40.0, 800.0),
+                      _resizeBaseH.clamp(20.0, 800.0),
                     );
                   },
                   child: Container(
-                    width: 24,
-                    height: 24,
+                    width: 26,
+                    height: 26,
                     decoration: BoxDecoration(
                       color: widget.scheme.primary,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: widget.scheme.primary.withValues(alpha: 0.4),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                     child: const Icon(Icons.open_in_full_rounded,
                         size: 14, color: Colors.white),
@@ -301,20 +308,29 @@ class _DraggableWidgetState extends State<_DraggableWidget> {
           ListTile(
             leading: const Icon(Icons.copy_rounded),
             title: const Text('Duplicate'),
-            onTap: () { Navigator.pop(ctx); widget.onDuplicate(); },
+            onTap: () {
+              Navigator.pop(ctx);
+              widget.onDuplicate();
+            },
           ),
           ListTile(
             leading: const Icon(Icons.flip_to_front_rounded),
             title: const Text('Bring to Front'),
-            onTap: () { Navigator.pop(ctx); widget.onBringFront(); },
+            onTap: () {
+              Navigator.pop(ctx);
+              widget.onBringFront();
+            },
           ),
           ListTile(
             leading: Icon(Icons.delete_rounded,
                 color: Theme.of(ctx).colorScheme.error),
             title: Text('Delete',
-                style: TextStyle(
-                    color: Theme.of(ctx).colorScheme.error)),
-            onTap: () { Navigator.pop(ctx); widget.onDelete(); },
+                style:
+                    TextStyle(color: Theme.of(ctx).colorScheme.error)),
+            onTap: () {
+              Navigator.pop(ctx);
+              widget.onDelete();
+            },
           ),
           const SizedBox(height: 16),
         ],
@@ -339,13 +355,16 @@ class _CornerButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 24,
-        height: 24,
+        width: 26,
+        height: 26,
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
           boxShadow: [
-            BoxShadow(color: color.withOpacity(0.4), blurRadius: 4),
+            BoxShadow(
+              color: color.withValues(alpha: 0.4),
+              blurRadius: 4,
+            ),
           ],
         ),
         child: Icon(icon, size: 14, color: Colors.white),
@@ -372,7 +391,7 @@ class _DotGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(0.2)
+      ..color = color.withValues(alpha: 0.2)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.fill;
 

@@ -157,7 +157,7 @@ ${indent}),''';
       case 'Container':
         return '''Container(
 ${indent}  decoration: BoxDecoration(
-${indent}    color: ${colorVal('color')}.withOpacity(${dbl('opacity', 1.0)}),
+${indent}    color: ${colorVal('color')}.withValues(alpha: ${dbl('opacity', 1.0)}),
 ${indent}    borderRadius: BorderRadius.circular(${dbl('borderRadius', 0)}),${bln('hasBorder') ? '''
 ${indent}    border: Border.all(
 ${indent}      color: ${colorVal('borderColor', 0xFF000000)},

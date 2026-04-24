@@ -39,7 +39,7 @@ class CanvasWidgetRenderer extends StatelessWidget {
           padding: EdgeInsets.all(dbl('padding', 8)),
           margin: EdgeInsets.all(dbl('margin', 0)),
           decoration: BoxDecoration(
-            color: color('color').withOpacity(dbl('opacity', 1.0)),
+            color: color('color').withValues(alpha: dbl('opacity', 1.0)),
             borderRadius: BorderRadius.circular(dbl('borderRadius', 0)),
             border: bln('hasBorder')
                 ? Border.all(
@@ -419,7 +419,7 @@ class CanvasWidgetRenderer extends StatelessWidget {
             child: TabBar(
               labelColor: color('indicatorColor', 0xFFFFFFFF),
               unselectedLabelColor:
-                  color('indicatorColor', 0xFFFFFFFF).withOpacity(0.6),
+                  color('indicatorColor', 0xFFFFFFFF).withValues(alpha: 0.6),
               indicatorColor: color('indicatorColor', 0xFFFFFFFF),
               tabs: [
                 Tab(text: str('tab1', 'Tab 1')),
@@ -561,9 +561,9 @@ class CanvasWidgetRenderer extends StatelessWidget {
           height: widgetProp.height,
           decoration: BoxDecoration(
             border: Border.all(
-                color: Colors.blue.withOpacity(0.3),
+                color: Colors.blue.withValues(alpha: 0.3),
                 style: BorderStyle.solid),
-            color: Colors.blue.withOpacity(0.05),
+            color: Colors.blue.withValues(alpha: 0.05),
           ),
           child: const Center(
             child: Text('Spacer',
@@ -625,9 +625,9 @@ class _LayoutHint extends StatelessWidget {
       width: size.width,
       height: size.height,
       decoration: BoxDecoration(
-        color: Colors.purple.withOpacity(0.07),
+        color: Colors.purple.withValues(alpha: 0.07),
         border: Border.all(
-            color: Colors.purple.withOpacity(0.4), style: BorderStyle.solid),
+            color: Colors.purple.withValues(alpha: 0.4), style: BorderStyle.solid),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Center(
@@ -635,11 +635,11 @@ class _LayoutHint extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.view_quilt_rounded,
-                color: Colors.purple.withOpacity(0.6), size: 24),
+                color: Colors.purple.withValues(alpha: 0.6), size: 24),
             Text(type,
                 style: TextStyle(
                     fontSize: 11,
-                    color: Colors.purple.withOpacity(0.8),
+                    color: Colors.purple.withValues(alpha: 0.8),
                     fontWeight: FontWeight.w500)),
           ],
         ),

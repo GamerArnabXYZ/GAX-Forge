@@ -36,8 +36,8 @@ class ProjectsNotifier extends StateNotifier<List<GaxProject>> {
   }
 
   Future<void> updateProject(GaxProject project) async {
-    final updated = project.copyWith();
-    await _box.put(updated.id, updated);
+    // FIX: Directly save the passed project (not empty copyWith)
+    await _box.put(project.id, project);
     _sync();
   }
 
@@ -63,7 +63,7 @@ class EditorState {
   final List<List<WidgetProperty>> undoStack;
   final List<List<WidgetProperty>> redoStack;
   final int activeTab; // 0=Widgets, 1=Canvas, 2=Preview
-  final bool showAllWidgets; // false = show only added widgets
+  final bool showAllWidgets;
 
   const EditorState({
     required this.project,
@@ -205,7 +205,8 @@ class EditorNotifier extends StateNotifier<EditorState> {
   }
 
   void resizeWidget(String id, double width, double height) {
-    _pushUndo();
+    // No _pushUndo here intentionally — resize is continuous,
+    // push undo only on pan start (handled in UI)
     final widgets = state.activeWidgets.map((w) {
       if (w.id == id) {
         return w.copyWith(
@@ -217,6 +218,8 @@ class EditorNotifier extends StateNotifier<EditorState> {
     }).toList();
     _updateActiveScreenWidgets(widgets);
   }
+
+  void pushUndoForResize() => _pushUndo();
 
   void selectWidget(String? id) {
     state = state.copyWith(selectedWidgetId: () => id);
@@ -316,10 +319,11 @@ class EditorNotifier extends StateNotifier<EditorState> {
 
   // ── Canvas Controls ───────────────────────
   void toggleLock() {
-    state = state.copyWith(canvasLocked: !state.canvasLocked);
-    if (state.canvasLocked == false) {
-      state = state.copyWith(selectedWidgetId: () => null);
-    }
+    final nowLocked = !state.canvasLocked;
+    state = state.copyWith(
+      canvasLocked: nowLocked,
+      selectedWidgetId: nowLocked ? null : () => null,
+    );
   }
 
   void setTab(int tab) {
