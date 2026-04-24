@@ -5,7 +5,6 @@ import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
 
-part 'app_models.g.dart';
 
 const _uuid = Uuid();
 
@@ -418,4 +417,163 @@ class WidgetCategory {
     required this.icon,
     required this.widgets,
   });
+}
+
+// ─────────────────────────────────────────────
+// HIVE TYPE ADAPTERS
+// ─────────────────────────────────────────────
+class WidgetPropertyAdapter extends TypeAdapter<WidgetProperty> {
+  @override
+  final int typeId = 0;
+
+  @override
+  WidgetProperty read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return WidgetProperty(
+      id: fields[0] as String?,
+      type: fields[1] as String,
+      x: fields[2] as double,
+      y: fields[3] as double,
+      width: fields[4] as double,
+      height: fields[5] as double,
+      props: (fields[6] as Map).cast<String, dynamic>(),
+      zIndex: fields[7] as int,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, WidgetProperty obj) {
+    writer
+      ..writeByte(8)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.type)
+      ..writeByte(2)
+      ..write(obj.x)
+      ..writeByte(3)
+      ..write(obj.y)
+      ..writeByte(4)
+      ..write(obj.width)
+      ..writeByte(5)
+      ..write(obj.height)
+      ..writeByte(6)
+      ..write(obj.props)
+      ..writeByte(7)
+      ..write(obj.zIndex);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is WidgetPropertyAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+
+  @override
+  int get hashCode => typeId.hashCode;
+}
+
+// ─────────────────────────────────────────────
+// CanvasScreen Adapter
+// ─────────────────────────────────────────────
+class CanvasScreenAdapter extends TypeAdapter<CanvasScreen> {
+  @override
+  final int typeId = 1;
+
+  @override
+  CanvasScreen read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return CanvasScreen(
+      id: fields[0] as String?,
+      name: fields[1] as String,
+      widgets: (fields[2] as List).cast<WidgetProperty>(),
+      backgroundColor: fields[3] as int,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, CanvasScreen obj) {
+    writer
+      ..writeByte(4)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.name)
+      ..writeByte(2)
+      ..write(obj.widgets)
+      ..writeByte(3)
+      ..write(obj.backgroundColor);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CanvasScreenAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+
+  @override
+  int get hashCode => typeId.hashCode;
+}
+
+// ─────────────────────────────────────────────
+// GaxProject Adapter
+// ─────────────────────────────────────────────
+class GaxProjectAdapter extends TypeAdapter<GaxProject> {
+  @override
+  final int typeId = 2;
+
+  @override
+  GaxProject read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return GaxProject(
+      id: fields[0] as String?,
+      name: fields[1] as String,
+      description: fields[2] as String,
+      screens: (fields[3] as List).cast<CanvasScreen>(),
+      createdAt: fields[4] as DateTime,
+      updatedAt: fields[5] as DateTime,
+      thumbnailColor: fields[6] as int,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, GaxProject obj) {
+    writer
+      ..writeByte(7)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.name)
+      ..writeByte(2)
+      ..write(obj.description)
+      ..writeByte(3)
+      ..write(obj.screens)
+      ..writeByte(4)
+      ..write(obj.createdAt)
+      ..writeByte(5)
+      ..write(obj.updatedAt)
+      ..writeByte(6)
+      ..write(obj.thumbnailColor);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GaxProjectAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+
+  @override
+  int get hashCode => typeId.hashCode;
 }

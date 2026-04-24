@@ -47,7 +47,7 @@ class ProjectCard extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: [
                       color,
-                      color.withValues(alpha: 0.6),
+                      color.withOpacity(0.6),
                     ],
                   ),
                 ),
@@ -57,7 +57,7 @@ class ProjectCard extends StatelessWidget {
                       child: Icon(
                         Icons.phone_android_rounded,
                         size: 52,
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: Colors.white.withOpacity(0.3),
                       ),
                     ),
                     Positioned(
@@ -169,12 +169,12 @@ class ProjectCard extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [color, color.withValues(alpha: 0.6)],
+              colors: [color, color.withOpacity(0.6)],
             ),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(Icons.phone_android_rounded,
-              color: Colors.white.withValues(alpha: 0.8), size: 24),
+              color: Colors.white.withOpacity(0.8), size: 24),
         ),
         title: Text(project.name,
             style: const TextStyle(fontWeight: FontWeight.bold)),

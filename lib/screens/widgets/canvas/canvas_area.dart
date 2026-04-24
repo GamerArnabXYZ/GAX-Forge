@@ -57,7 +57,7 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                 color: bgColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
+                    color: Colors.black.withOpacity(0.25),
                     blurRadius: 24,
                     spreadRadius: 4,
                   ),
@@ -65,7 +65,7 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                 border: isPreview
                     ? null
                     : Border.all(
-                        color: scheme.outline.withValues(alpha: 0.5),
+                        color: scheme.outline.withOpacity(0.5),
                         width: 1,
                       ),
               ),
@@ -87,7 +87,7 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: scheme.surfaceContainerHighest
-                              .withValues(alpha: 0.8),
+                              .withOpacity(0.8),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -200,7 +200,7 @@ class _DraggableWidgetState extends State<_DraggableWidget> {
                 widget.onMove(details.delta.dx, details.delta.dy);
               },
         child: Stack(
-          clipBehavior: Clip.visible,
+          clipBehavior: Clip.none,
           children: [
             // ── Selection border ──
             if (widget.isSelected && !widget.isPreview)
@@ -281,7 +281,7 @@ class _DraggableWidgetState extends State<_DraggableWidget> {
                       borderRadius: BorderRadius.circular(5),
                       boxShadow: [
                         BoxShadow(
-                          color: widget.scheme.primary.withValues(alpha: 0.4),
+                          color: widget.scheme.primary.withOpacity(0.4),
                           blurRadius: 4,
                         ),
                       ],
@@ -362,7 +362,7 @@ class _CornerButton extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.4),
+              color: color.withOpacity(0.4),
               blurRadius: 4,
             ),
           ],
@@ -391,7 +391,7 @@ class _DotGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withValues(alpha: 0.2)
+      ..color = color.withOpacity(0.2)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.fill;
 

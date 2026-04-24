@@ -411,7 +411,7 @@ class _StatChip extends StatelessWidget {
           style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600)),
       padding: const EdgeInsets.symmetric(horizontal: 4),
       visualDensity: VisualDensity.compact,
-      backgroundColor: color.withValues(alpha: 0.12),
+      backgroundColor: color.withOpacity(0.12),
       side: BorderSide.none,
     );
   }
