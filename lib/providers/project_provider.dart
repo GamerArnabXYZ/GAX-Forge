@@ -296,6 +296,15 @@ class EditorNotifier extends StateNotifier<EditorState> {
     state = state.copyWith(project: state.project.copyWith(screens: screens));
   }
 
+  void sendToBack(String id) {
+    _pushUndo();
+    final widgets = state.activeWidgets.map((w) {
+      if (w.id == id) return w.copyWith(zIndex: 0);
+      return w.copyWith(zIndex: w.zIndex + 1);
+    }).toList();
+    _updateActiveScreenWidgets(widgets);
+  }
+
   // ── Undo / Redo ───────────────────────────
   void undo() {
     if (state.undoStack.isEmpty) return;

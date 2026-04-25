@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/project_provider.dart';
 import '../../utils/export_utils.dart';
+import '../../utils/json_io.dart';
 import '../widgets/canvas/canvas_area.dart';
 import '../widgets/panels/widget_library_panel.dart';
 import '../widgets/panels/properties_panel.dart';
