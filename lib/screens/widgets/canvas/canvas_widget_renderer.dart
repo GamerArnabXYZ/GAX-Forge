@@ -461,7 +461,6 @@ class CanvasWidgetRenderer extends StatelessWidget {
       }
 
       case 'Chip': {
-        final hasLeading = (p['leadingIcon'] as int? ?? -1) >= 0;
         final hasAvatar = bln('avatar');
         return Padding(
           padding: const EdgeInsets.all(2),

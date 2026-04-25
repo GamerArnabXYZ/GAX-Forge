@@ -138,7 +138,6 @@ class _PropsTab extends StatelessWidget {
 
   void _set(String key, dynamic val) => notifier.updateWidgetProp(widget_.id, key, val);
   dynamic _get(String key, [dynamic fb]) => widget_.props[key] ?? fb;
-  Color _col(String key, [int fb = 0xFF6750A4]) => Color(_get(key, fb) as int);
   double _dbl(String key, [double fb = 0]) => ((_get(key, fb)) as num).toDouble();
   String _str(String key, [String fb = '']) => (_get(key, fb) as String?) ?? fb;
   bool _bln(String key, [bool fb = false]) => (_get(key, fb) as bool?) ?? fb;

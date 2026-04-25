@@ -108,6 +108,24 @@ class EditorScreen extends ConsumerWidget {
                 visualDensity: VisualDensity.compact,
               ),
             ),
+            const PopupMenuItem(
+              value: 'json_export',
+              child: ListTile(
+                leading: Icon(Icons.upload_rounded),
+                title: Text('Export JSON'),
+                contentPadding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'json_import',
+              child: ListTile(
+                leading: Icon(Icons.download_rounded),
+                title: Text('Import JSON'),
+                contentPadding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
             const PopupMenuDivider(),
             const PopupMenuItem(
               value: 'add_screen',
@@ -189,6 +207,22 @@ class EditorScreen extends ConsumerWidget {
         break;
       case 'bg_color':
         _pickBgColor(context, notifier);
+        break;
+      case 'json_export':
+        final proj = ref.read(editorProvider(projectId)).project;
+        final idx = ref.read(editorProvider(projectId)).activeScreenIndex;
+        JsonIO.showExportDialog(context, proj, idx);
+        break;
+      case 'json_import':
+        final imported = await JsonIO.showImportDialog(context);
+        if (imported != null && context.mounted) {
+          await ref.read(projectsProvider.notifier).addProject(imported);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Imported: ${imported.name}'),
+                  behavior: SnackBarBehavior.floating));
+          }
+        }
         break;
     }
   }
