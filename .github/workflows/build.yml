@@ -33,9 +33,11 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      # --- FIX: ENABLE WEB SUPPORT ---
+      # --- FIX: ENABLE WEB SUPPORT WITH VALID NAME ---
       - name: Enable Web Support
-        run: flutter create . --platforms web
+        run: |
+          # Humne project name 'gax_forge' specify kar diya taake invalid name error na aaye
+          flutter create . --platforms web --project-name gax_forge
 
       - name: Analyze code
         run: flutter analyze --no-fatal-infos
@@ -87,10 +89,6 @@ jobs:
             ### Downloads
             - `app-arm64-v8a-release.apk` → Modern 64-bit Android (recommended)
             - `app-release.apk` → Universal APK (all architectures)
-            
-            ### What's New
-            - Full canvas drag-drop widget editor
-            - Material 3 UI
           files: |
             build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
             build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
