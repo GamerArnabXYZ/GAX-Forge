@@ -1,16 +1,13 @@
-name: Build GAX Forge APK & Web
+name: Build GAX Forge APK
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
-  build-all:
-    name: Build APK and Web
+  build-apk:
+    name: Build & Release APK
     runs-on: ubuntu-latest
 
     steps:
@@ -33,16 +30,9 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      # --- FIX: ENABLE WEB SUPPORT WITH VALID NAME ---
-      - name: Enable Web Support
-        run: |
-          # Humne project name 'gax_forge' specify kar diya taake invalid name error na aaye
-          flutter create . --platforms web --project-name gax_forge
-
       - name: Analyze code
         run: flutter analyze --no-fatal-infos
 
-      # --- ANDROID BUILD ---
       - name: Build APK (split per ABI)
         run: |
           flutter build apk --release \
@@ -53,28 +43,12 @@ jobs:
       - name: Build universal APK
         run: flutter build apk --release --no-tree-shake-icons
 
-      # --- WEB BUILD (iOS 12.6 Compatible) ---
-      - name: Build Web
-        run: |
-          flutter build web --release \
-            --web-renderer html \
-            --base-href "/${{ github.event.repository.name }}/"
-
       - name: Get version
         id: version
         run: |
           VERSION=$(grep 'version:' pubspec.yaml | head -1 | awk '{print $2}')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      # --- DEPLOY WEB TO GITHUB PAGES ---
-      - name: Deploy to Web Branch
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/web
-          publish_branch: web-deploy
-
-      # --- CREATE RELEASE WITH APKs ---
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -83,12 +57,18 @@ jobs:
           body: |
             ## GAX Forge - Flutter UI Design Maker
             
-            ### Web Version (iOS 12+ Compatible)
-            - Link: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
-            
             ### Downloads
             - `app-arm64-v8a-release.apk` → Modern 64-bit Android (recommended)
+            - `app-armeabi-v7a-release.apk` → Older 32-bit Android
+            - `app-x86_64-release.apk` → Android emulator / x86 devices
             - `app-release.apk` → Universal APK (all architectures)
+            
+            ### What's New
+            - Full canvas drag-drop widget editor
+            - 40+ Flutter widgets support
+            - Dart code export
+            - Hive local storage
+            - Material 3 UI
           files: |
             build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
             build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
@@ -98,3 +78,4 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
