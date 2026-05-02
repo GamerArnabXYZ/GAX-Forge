@@ -163,6 +163,19 @@ class EditorNotifier extends StateNotifier<EditorState> {
     state = state.copyWith(project: state.project.copyWith(screens: screens));
   }
 
+  void reorderScreens(List<CanvasScreen> reordered) {
+    state = state.copyWith(
+      project: state.project.copyWith(screens: reordered),
+      activeScreenIndex: 0,
+    );
+  }
+
+  void setScreenSize(int index, String sizeId) {
+    final screens = List<CanvasScreen>.from(state.project.screens);
+    screens[index] = screens[index].copyWith(screenSize: sizeId);
+    state = state.copyWith(project: state.project.copyWith(screens: screens));
+  }
+
   void deleteScreen(int index) {
     if (state.project.screens.length <= 1) return;
     final screens = List<CanvasScreen>.from(state.project.screens)

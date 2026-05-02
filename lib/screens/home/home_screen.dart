@@ -330,7 +330,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final project = GaxProject(
       name: result['name']!,
       description: result['description'] ?? '',
-      thumbnailColor: int.tryParse(result['color'] ?? '') ?? 0xFF6750A4,
+      thumbnailColor: int.parse(result['color'] ?? '0xFF6750A4'),
     );
     await ref.read(projectsProvider.notifier).addProject(project);
   }

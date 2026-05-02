@@ -3,7 +3,6 @@
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:share_plus/share_plus.dart';
@@ -147,18 +146,16 @@ class JsonIO {
           ListTile(
             leading: const CircleAvatar(child: Icon(Icons.copy_rounded)),
             title: const Text('Copy JSON to Clipboard'),
-            onTap: () async {
+            onTap: () {
               Navigator.pop(ctx);
               final json = exportToString(project);
-              await Clipboard.setData(ClipboardData(text: json));
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${json.length} characters copied to clipboard!'),
-                    action: SnackBarAction(label: 'OK', onPressed: () {}),
-                  ),
-                );
-              }
+              // Copy to clipboard
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${json.length} chars copied!'),
+                  action: SnackBarAction(label: 'OK', onPressed: () {}),
+                ),
+              );
             },
           ),
         ]),

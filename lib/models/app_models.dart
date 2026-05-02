@@ -100,6 +100,7 @@ class WidgetProperty extends HiveObject {
           'elevation': 2.0, 'padding': 16.0,
           'iconCode': -1, 'iconPosition': 'left',
           'disabled': false,
+          'navigateTo': '',
         };
       case 'OutlinedButton':
         return {
@@ -107,24 +108,28 @@ class WidgetProperty extends HiveObject {
           'borderRadius': 12.0, 'fontSize': 14.0,
           'borderWidth': 1.0, 'padding': 16.0,
           'iconCode': -1, 'disabled': false,
+          'navigateTo': '',
         };
       case 'TextButton':
         return {
           'text': 'Text Button', 'color': 0xFF6750A4,
           'fontSize': 14.0, 'fontWeight': 'normal',
           'padding': 8.0, 'disabled': false,
+          'navigateTo': '',
         };
       case 'FilledButton':
         return {
           'text': 'Filled', 'color': 0xFF6750A4,
           'textColor': 0xFFFFFFFF, 'borderRadius': 12.0,
           'fontSize': 14.0, 'disabled': false,
+          'navigateTo': '',
         };
       case 'FilledTonalButton':
         return {
           'text': 'Tonal', 'color': 0xFFE8DEF8,
           'textColor': 0xFF21005D, 'borderRadius': 12.0,
           'fontSize': 14.0,
+          'navigateTo': '',
         };
       case 'IconButton':
         return {
@@ -132,6 +137,7 @@ class WidgetProperty extends HiveObject {
           'size': 24.0, 'style': 'standard',
           'bgColor': 0x00000000, 'tooltip': '',
           'disabled': false,
+          'navigateTo': '',
         };
       case 'FloatingActionButton':
         return {
@@ -140,6 +146,7 @@ class WidgetProperty extends HiveObject {
           'extended': false, 'label': 'Create',
           'elevation': 4.0, 'tooltip': '',
           'shape': 'circle',
+          'navigateTo': '',
         };
       case 'SegmentedButton':
         return {
@@ -227,6 +234,7 @@ class WidgetProperty extends HiveObject {
           'margin': 4.0, 'clipBehavior': 'antiAlias',
           'variant': 'elevated', 'borderColor': 0xFFCAC4D0,
           'borderWidth': 1.0,
+          'navigateTo': '',
         };
       case 'Chip':
         return {
@@ -237,6 +245,7 @@ class WidgetProperty extends HiveObject {
           'avatarColor': 0xFF6750A4, 'selected': false,
           'selectedColor': 0xFF6750A4, 'elevation': 0.0,
           'padding': 8.0,
+          'navigateTo': '',
         };
       case 'Badge':
         return {
@@ -487,6 +496,7 @@ class WidgetProperty extends HiveObject {
           'dense': false, 'contentPadding': 16.0,
           'tileShape': 'rectangle', 'iconColor': 0xFF6750A4,
           'minHeight': 56.0, 'isThreeLine': false,
+          'navigateTo': '',
         };
 
       // ── Custom ──
@@ -554,26 +564,31 @@ class CanvasScreen extends HiveObject {
   @HiveField(1) String name;
   @HiveField(2) List<WidgetProperty> widgets;
   @HiveField(3) int backgroundColor;
+  @HiveField(4) String screenSize; // e.g. 'iphone_15_pro', 'pixel_8', 'tablet_ipad'
 
   CanvasScreen({
     String? id, this.name = 'Screen 1',
     List<WidgetProperty>? widgets,
     this.backgroundColor = 0xFFFFFFFF,
+    this.screenSize = 'pixel_8',
   })  : id = id ?? _uuid.v4(),
         widgets = widgets ?? [];
 
   CanvasScreen copyWith({
-    String? name, List<WidgetProperty>? widgets, int? backgroundColor,
+    String? name, List<WidgetProperty>? widgets,
+    int? backgroundColor, String? screenSize,
   }) {
     return CanvasScreen(
       id: id, name: name ?? this.name,
       widgets: widgets ?? List.from(this.widgets),
       backgroundColor: backgroundColor ?? this.backgroundColor,
+      screenSize: screenSize ?? this.screenSize,
     );
   }
 
   Map<String, dynamic> toJson() => {
     'id': id, 'name': name, 'backgroundColor': backgroundColor,
+    'screenSize': screenSize,
     'widgets': widgets.map((w) => w.toJson()).toList(),
   };
 
@@ -581,6 +596,7 @@ class CanvasScreen extends HiveObject {
     id: json['id'] as String?,
     name: json['name'] as String,
     backgroundColor: json['backgroundColor'] as int? ?? 0xFFFFFFFF,
+    screenSize: json['screenSize'] as String? ?? 'pixel_8',
     widgets: (json['widgets'] as List)
         .map((w) => WidgetProperty.fromJson(Map<String, dynamic>.from(w as Map)))
         .toList(),
@@ -772,17 +788,19 @@ class CanvasScreenAdapter extends TypeAdapter<CanvasScreen> {
       name: fields[1] as String,
       widgets: (fields[2] as List).cast<WidgetProperty>(),
       backgroundColor: fields[3] as int,
+      screenSize: fields[4] as String? ?? 'pixel_8',
     );
   }
 
   @override
   void write(BinaryWriter writer, CanvasScreen obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)..write(obj.id)
       ..writeByte(1)..write(obj.name)
       ..writeByte(2)..write(obj.widgets)
-      ..writeByte(3)..write(obj.backgroundColor);
+      ..writeByte(3)..write(obj.backgroundColor)
+      ..writeByte(4)..write(obj.screenSize);
   }
 
   @override

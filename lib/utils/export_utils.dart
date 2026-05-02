@@ -89,22 +89,8 @@ class ExportUtils {
     buffer.writeln();
     buffer.writeln("import 'package:flutter/material.dart';");
     buffer.writeln();
-    buffer.writeln("class ${className}Screen extends StatefulWidget {");
+    buffer.writeln("class ${className}Screen extends StatelessWidget {");
     buffer.writeln("  const ${className}Screen({super.key});");
-    buffer.writeln();
-    buffer.writeln("  @override");
-    buffer.writeln("  State<${className}Screen> createState() => _${className}ScreenState();");
-    buffer.writeln("}");
-    buffer.writeln();
-    buffer.writeln("class _${className}ScreenState extends State<${className}Screen> {");
-    buffer.writeln("  // State variables for interactive widgets");
-    for (final w in screen.widgets) {
-      if (w.type == 'Switch' || w.type == 'Checkbox') {
-        buffer.writeln("  bool _val_${w.id.replaceAll('-', '_')} = ${w.props['value'] ?? true};");
-      } else if (w.type == 'Slider') {
-        buffer.writeln("  double _val_${w.id.replaceAll('-', '_')} = ${w.props['value'] ?? 0.5};");
-      }
-    }
     buffer.writeln();
     buffer.writeln("  @override");
     buffer.writeln("  Widget build(BuildContext context) {");
@@ -146,16 +132,8 @@ class ExportUtils {
         (p[key] as String?) ?? fallback;
     bool bln(String key, [bool fallback = false]) =>
         (p[key] as bool?) ?? fallback;
-    int num_(String key, [int fallback = 0]) {
-      final v = p[key];
-      if (v is int) return v;
-      if (v is double) return v.toInt();
-      if (v is String) return int.tryParse(v) ?? fallback;
-      return fallback;
-    }
 
-    final inner =
-        _generateWidgetCode(w, p, colorVal, dbl, str, bln, num_, indent);
+    final inner = _generateWidgetCode(w, p, colorVal, dbl, str, bln, indent);
 
     return '''${indent}Positioned(
 ${indent}  left: ${w.x.toStringAsFixed(1)},
@@ -173,7 +151,6 @@ ${indent}),''';
     double Function(String, [double]) dbl,
     String Function(String, [String]) str,
     bool Function(String, [bool]) bln,
-    int Function(String, [int]) num_,
     String indent,
   ) {
     switch (w.type) {
@@ -286,90 +263,41 @@ ${indent}  ),
 ${indent})''';
 
       case 'Switch':
-        final id = w.id.replaceAll('-', '_');
-        return '''Switch(
-${indent}  value: _val_$id,
-${indent}  activeColor: ${colorVal('activeColor')},
-${indent}  onChanged: (v) => setState(() => _val_$id = v),
+        return '''StatefulBuilder(
+${indent}  builder: (context, setState) {
+${indent}    bool _value = ${bln('value', true)};
+${indent}    return Switch(
+${indent}      value: _value,
+${indent}      activeColor: ${colorVal('activeColor')},
+${indent}      onChanged: (v) => setState(() => _value = v),
+${indent}    );
+${indent}  },
 ${indent})''';
 
       case 'Checkbox':
-        final id = w.id.replaceAll('-', '_');
-        return '''Checkbox(
-${indent}  value: _val_$id,
-${indent}  activeColor: ${colorVal('activeColor')},
-${indent}  onChanged: (v) => setState(() => _val_$id = v ?? false),
+        return '''StatefulBuilder(
+${indent}  builder: (context, setState) {
+${indent}    bool _value = ${bln('value', true)};
+${indent}    return Checkbox(
+${indent}      value: _value,
+${indent}      activeColor: ${colorVal('activeColor')},
+${indent}      onChanged: (v) => setState(() => _value = v ?? false),
+${indent}    );
+${indent}  },
 ${indent})''';
 
       case 'Slider':
-        final id = w.id.replaceAll('-', '_');
-        return '''Slider(
-${indent}  value: _val_$id,
-${indent}  min: ${dbl('min', 0)},
-${indent}  max: ${dbl('max', 1)},
-${indent}  activeColor: ${colorVal('activeColor')},
-${indent}  onChanged: (v) => setState(() => _val_$id = v),
-${indent})''';
-
-      case 'DropdownButton':
-        return '''DropdownButtonFormField<String>(
-${indent}  value: '${_escapeStr(str('value', 'Option 1'))}',
-${indent}  decoration: InputDecoration(
-${indent}    labelText: '${_escapeStr(str('labelText', 'Select'))}',
-${indent}    border: OutlineInputBorder(borderRadius: BorderRadius.circular(${dbl('borderRadius', 8)})),
-${indent}  ),
-${indent}  items: '${_escapeStr(str('items', 'Option 1,Option 2,Option 3'))}'.split(',')
-${indent}      .map((s) => DropdownMenuItem(value: s.trim(), child: Text(s.trim()))).toList(),
-${indent}  onChanged: (v) {},
-${indent})''';
-
-      case 'DatePicker':
-        return '''OutlinedButton.icon(
-${indent}  icon: const Icon(Icons.calendar_today_rounded),
-${indent}  label: Text('${_escapeStr(str('label', 'Pick Date'))}'),
-${indent}  onPressed: () {},
-${indent})''';
-
-      case 'TimePicker':
-        return '''OutlinedButton.icon(
-${indent}  icon: const Icon(Icons.access_time_rounded),
-${indent}  label: Text('${_escapeStr(str('label', 'Pick Time'))}'),
-${indent}  onPressed: () {},
-${indent})''';
-
-      case 'SegmentedButton':
-        return '''SegmentedButton<int>(
-${indent}  segments: [
-${indent}    ButtonSegment(value: 0, label: Text('${_escapeStr(str('seg1', 'Day'))}')),
-${indent}    ButtonSegment(value: 1, label: Text('${_escapeStr(str('seg2', 'Week'))}')),
-${indent}    ButtonSegment(value: 2, label: Text('${_escapeStr(str('seg3', 'Month'))}')),
-${indent}  ],
-${indent}  selected: {${num_('selected')}},
-${indent}  onSelectionChanged: (v) {},
-${indent})''';
-
-      case 'BottomNavigationBar':
-        return '''BottomNavigationBar(
-${indent}  backgroundColor: ${colorVal('color', 0xFFFFFFFF)},
-${indent}  selectedItemColor: ${colorVal('selectedColor', 0xFF6750A4)},
-${indent}  unselectedItemColor: ${colorVal('unselectedColor', 0xFF9E9E9E)},
-${indent}  currentIndex: ${num_('currentIndex')},
-${indent}  items: const [
-${indent}    BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-${indent}    BottomNavigationBarItem(icon: Icon(Icons.search_rounded), label: 'Search'),
-${indent}    BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
-${indent}  ],
-${indent})''';
-
-      case 'SizedBox':
-        return '''SizedBox(
-${indent}  width: ${w.width.toStringAsFixed(1)},
-${indent}  height: ${w.height.toStringAsFixed(1)},
-${indent}  child: ${bln('showBorder', true) ? '''DecoratedBox(
-${indent}    decoration: BoxDecoration(
-${indent}      border: Border.all(color: ${colorVal('borderColor', 0xFFBBBBBB)}),
-${indent}    ),
-${indent}  )''' : 'null'},
+        return '''StatefulBuilder(
+${indent}  builder: (context, setState) {
+${indent}    double _value = ${dbl('value', 0.5)};
+${indent}    return Slider(
+${indent}      value: _value,
+${indent}      min: ${dbl('min', 0)},
+${indent}      max: ${dbl('max', 1)},
+${indent}      activeColor: ${colorVal('activeColor')},
+${indent}      onChanged: (v) => setState(() => _value = v),
+${indent}    );
+${indent}  },
 ${indent})''';
 
       case 'LinearProgressIndicator':

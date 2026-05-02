@@ -157,7 +157,8 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
     Navigator.pop(context, {
       'name': _nameCtrl.text.trim(),
       'description': _descCtrl.text.trim(),
-      'color': _selectedColor.value.toString(),
+      'color':
+          '0x${_selectedColor.value.toRadixString(16).toUpperCase().padLeft(8, '0')}',
     });
   }
 }
