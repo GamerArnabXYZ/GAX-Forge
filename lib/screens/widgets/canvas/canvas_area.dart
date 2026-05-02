@@ -266,14 +266,14 @@ class _DraggableWidgetState extends State<_DraggableWidget> {
   Widget build(BuildContext context) {
     final w = widget.widgetProp;
     final hasNav = _navigableTypes.contains(w.type);
-    final navigateTo = w.props['navigateTo'] as String?;
-    final isConnected = navigateTo != null && navigateTo.isNotEmpty;
+    final navigateTo = (w.props['navigateTo'] as String?) ?? '';
+    final isConnected = navigateTo.isNotEmpty;
 
     return Positioned(
       left: w.x, top: w.y,
       child: GestureDetector(
         onTap: widget.isPreview && isConnected
-            ? () => _navigateToScreen(context, navigateTo ?? '')
+            ? () => _navigateToScreen(context, navigateTo)
             : widget.onTap,
         onLongPress: widget.isLocked ? null
             : () => _showContextMenu(context),
@@ -310,7 +310,7 @@ class _DraggableWidgetState extends State<_DraggableWidget> {
                     Icon(Icons.arrow_forward_rounded, size: 9,
                         color: widget.scheme.onTertiary),
                     const SizedBox(width: 2),
-                    Text(_screenName(navigateTo ?? ''),
+                    Text(_screenName(navigateTo),
                         style: TextStyle(fontSize: 8,
                             color: widget.scheme.onTertiary,
                             fontWeight: FontWeight.bold)),
