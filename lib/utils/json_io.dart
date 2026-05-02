@@ -146,16 +146,18 @@ class JsonIO {
           ListTile(
             leading: const CircleAvatar(child: Icon(Icons.copy_rounded)),
             title: const Text('Copy JSON to Clipboard'),
-            onTap: () {
+            onTap: () async {
               Navigator.pop(ctx);
               final json = exportToString(project);
-              // Copy to clipboard
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${json.length} chars copied!'),
-                  action: SnackBarAction(label: 'OK', onPressed: () {}),
-                ),
-              );
+              await Clipboard.setData(ClipboardData(text: json));
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${json.length} characters copied to clipboard!'),
+                    action: SnackBarAction(label: 'OK', onPressed: () {}),
+                  ),
+                );
+              }
             },
           ),
         ]),

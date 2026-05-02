@@ -146,8 +146,16 @@ class ExportUtils {
         (p[key] as String?) ?? fallback;
     bool bln(String key, [bool fallback = false]) =>
         (p[key] as bool?) ?? fallback;
+    int num_(String key, [int fallback = 0]) {
+      final v = p[key];
+      if (v is int) return v;
+      if (v is double) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? fallback;
+      return fallback;
+    }
 
-    final inner = _generateWidgetCode(w, p, colorVal, dbl, str, bln, indent);
+    final inner =
+        _generateWidgetCode(w, p, colorVal, dbl, str, bln, num_, indent);
 
     return '''${indent}Positioned(
 ${indent}  left: ${w.x.toStringAsFixed(1)},
@@ -165,6 +173,7 @@ ${indent}),''';
     double Function(String, [double]) dbl,
     String Function(String, [String]) str,
     bool Function(String, [bool]) bln,
+    int Function(String, [int]) num_,
     String indent,
   ) {
     switch (w.type) {
