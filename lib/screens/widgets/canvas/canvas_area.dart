@@ -36,12 +36,10 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
     final bgColor = Color(editor.activeScreen.backgroundColor);
 
     return GestureDetector(
-      onTap: () {
-        if (editor.canvasLocked) notifier.selectWidget(null);
-      },
+      onTap: () => notifier.selectWidget(null),
       child: InteractiveViewer(
         transformationController: _transformCtrl,
-        panEnabled: !editor.canvasLocked,
+        panEnabled: !editor.canvasLocked && editor.selectedWidgetId == null,
         scaleEnabled: !editor.canvasLocked,
         minScale: 0.3,
         maxScale: 3.0,
@@ -128,11 +126,7 @@ class _CanvasAreaState extends ConsumerState<CanvasArea> {
         isLocked: editor.canvasLocked,
         isPreview: isPreview,
         scheme: scheme,
-        onTap: () {
-          if (editor.canvasLocked) {
-            notifier.selectWidget(isSelected ? null : widget.id);
-          }
-        },
+        onTap: () => notifier.selectWidget(isSelected ? null : widget.id),
         onMove: (dx, dy) => notifier.moveWidget(widget.id, dx, dy),
         onDelete: () => notifier.deleteWidget(widget.id),
         onDuplicate: () => notifier.duplicateWidget(widget.id),

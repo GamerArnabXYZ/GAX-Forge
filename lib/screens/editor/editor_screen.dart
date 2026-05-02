@@ -31,7 +31,7 @@ class EditorScreen extends ConsumerWidget {
             children: [
               CanvasArea(projectId: projectId),
               // Floating properties panel when widget is selected
-              if (editor.canvasLocked && editor.selectedWidgetId != null)
+              if (editor.selectedWidgetId != null && !editor.previewMode)
                 Positioned(
                   bottom: 0,
                   left: 0,
