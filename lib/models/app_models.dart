@@ -724,6 +724,10 @@ class WidgetCategory {
 // ─────────────────────────────────────────────
 // HIVE TYPE ADAPTERS
 // ─────────────────────────────────────────────
+
+// Helper to safely handle int/double from Hive
+double _num(dynamic v) => (v as num?)?.toDouble() ?? 0.0;
+
 class WidgetPropertyAdapter extends TypeAdapter<WidgetProperty> {
   @override
   final int typeId = 0;
@@ -737,12 +741,12 @@ class WidgetPropertyAdapter extends TypeAdapter<WidgetProperty> {
     return WidgetProperty(
       id: fields[0] as String?,
       type: fields[1] as String,
-      x: fields[2] as double,
-      y: fields[3] as double,
-      width: fields[4] as double,
-      height: fields[5] as double,
+      x: _num(fields[2]),
+      y: _num(fields[3]),
+      width: _num(fields[4]),
+      height: _num(fields[5]),
       props: (fields[6] as Map).cast<String, dynamic>(),
-      zIndex: fields[7] as int,
+      zIndex: fields[7] as int? ?? 0,
       customName: fields[8] as String?,
     );
   }
@@ -787,7 +791,7 @@ class CanvasScreenAdapter extends TypeAdapter<CanvasScreen> {
       id: fields[0] as String?,
       name: fields[1] as String,
       widgets: (fields[2] as List).cast<WidgetProperty>(),
-      backgroundColor: fields[3] as int,
+      backgroundColor: (fields[3] as num?)?.toInt() ?? 0xFFFFFFFF,
       screenSize: fields[4] as String? ?? 'pixel_8',
     );
   }

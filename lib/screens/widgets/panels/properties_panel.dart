@@ -141,7 +141,7 @@ class _PropsTab extends StatelessWidget {
   double _dbl(String key, [double fb = 0]) => ((_get(key, fb)) as num).toDouble();
   String _str(String key, [String fb = '']) => (_get(key, fb) as String?) ?? fb;
   bool _bln(String key, [bool fb = false]) => (_get(key, fb) as bool?) ?? fb;
-  int _num(String key, [int fb = 0]) => (_get(key, fb) as int?) ?? fb;
+  int _num(String key, [int fb = 0]) => (_get(key, fb) as num?)?.toInt() ?? fb;
 
   List<Widget> _buildTypeProps(BuildContext context) {
     final type = widget_.type;

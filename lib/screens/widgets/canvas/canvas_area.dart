@@ -217,7 +217,8 @@ class _CanvasContent extends StatelessWidget {
             onDuplicate: () => notifier.duplicateWidget(w.id),
             onBringFront: () => notifier.bringToFront(w.id),
             onResize: (ww, hh) => notifier.resizeWidget(w.id, ww, hh),
-            onResizeStart: () => notifier.pushUndoForResize(),
+            onResizeStart: () => notifier.pushUndo(),
+            onMoveStart: () => notifier.pushUndo(),
             onNavigateToScreen: (idx) => notifier.switchScreen(idx),
             onUpdateProp: (key, val) => notifier.updateWidgetProp(w.id, key, val),
           )),
@@ -234,7 +235,7 @@ class _DraggableWidget extends StatefulWidget {
   final ColorScheme scheme;
   final String projectId;
   final List<CanvasScreen> allScreens;
-  final VoidCallback onTap, onDelete, onDuplicate, onBringFront, onResizeStart;
+  final VoidCallback onTap, onDelete, onDuplicate, onBringFront, onResizeStart, onMoveStart;
   final Function(double, double) onMove, onResize;
   final Function(int) onNavigateToScreen;
   final Function(String, dynamic) onUpdateProp;
@@ -245,6 +246,7 @@ class _DraggableWidget extends StatefulWidget {
     required this.projectId, required this.allScreens,
     required this.onTap, required this.onDelete, required this.onDuplicate,
     required this.onBringFront, required this.onResizeStart,
+    required this.onMoveStart,
     required this.onMove, required this.onResize,
     required this.onNavigateToScreen, required this.onUpdateProp,
   });
@@ -271,12 +273,15 @@ class _DraggableWidgetState extends State<_DraggableWidget> {
 
     return Positioned(
       left: w.x, top: w.y,
-      child: GestureDetector(
+      child: RepaintBoundary(
+        child: GestureDetector(
         onTap: widget.isPreview && isConnected
             ? () => _navigateToScreen(context, navigateTo)
             : widget.onTap,
         onLongPress: widget.isLocked ? null
             : () => _showContextMenu(context),
+        onPanStart: widget.isLocked ? null
+            : (_) => widget.onMoveStart(),
         onPanUpdate: widget.isLocked ? null
             : (d) => widget.onMove(d.delta.dx, d.delta.dy),
         child: Stack(
@@ -384,7 +389,7 @@ class _DraggableWidgetState extends State<_DraggableWidget> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   String _screenName(String screenId) {

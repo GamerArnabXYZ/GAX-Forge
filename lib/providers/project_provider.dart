@@ -188,15 +188,15 @@ class EditorNotifier extends StateNotifier<EditorState> {
   }
 
   // ── Widget Management ──────────────────────
-  void _pushUndo() {
+  void pushUndo() {
     final stack = List<List<WidgetProperty>>.from(state.undoStack);
     stack.add(List.from(state.activeWidgets));
-    if (stack.length > 30) stack.removeAt(0);
+    if (stack.length > 20) stack.removeAt(0); // 3GB RAM safety
     state = state.copyWith(undoStack: stack, redoStack: []);
   }
 
   void addWidget(String type) {
-    _pushUndo();
+    pushUndo();
     final widgets = List<WidgetProperty>.from(state.activeWidgets);
     final newWidget = WidgetProperty(
       type: type,
@@ -232,14 +232,12 @@ class EditorNotifier extends StateNotifier<EditorState> {
     _updateActiveScreenWidgets(widgets);
   }
 
-  void pushUndoForResize() => _pushUndo();
-
   void selectWidget(String? id) {
     state = state.copyWith(selectedWidgetId: () => id);
   }
 
   void updateWidgetProp(String id, String key, dynamic value) {
-    _pushUndo();
+    pushUndo();
     final widgets = state.activeWidgets.map((w) {
       if (w.id == id) {
         final props = Map<String, dynamic>.from(w.props);
@@ -252,7 +250,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
   }
 
   void deleteWidget(String id) {
-    _pushUndo();
+    pushUndo();
     final widgets =
         state.activeWidgets.where((w) => w.id != id).toList();
     _updateActiveScreenWidgets(widgets);
@@ -260,7 +258,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
   }
 
   void duplicateWidget(String id) {
-    _pushUndo();
+    pushUndo();
     final source = state.activeWidgets.firstWhere((w) => w.id == id);
     final duplicate = WidgetProperty(
       type: source.type,
@@ -277,7 +275,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
   }
 
   void bringToFront(String id) {
-    _pushUndo();
+    pushUndo();
     final widgets = state.activeWidgets.map((w) {
       if (w.id == id) return w.copyWith(zIndex: state.activeWidgets.length);
       return w;
@@ -310,7 +308,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
   }
 
   void sendToBack(String id) {
-    _pushUndo();
+    pushUndo();
     final widgets = state.activeWidgets.map((w) {
       if (w.id == id) return w.copyWith(zIndex: 0);
       return w.copyWith(zIndex: w.zIndex + 1);

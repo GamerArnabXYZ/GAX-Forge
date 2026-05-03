@@ -34,7 +34,7 @@ class EditorScreen extends ConsumerWidget {
           // Canvas + Properties panel
           Stack(children: [
             CanvasArea(projectId: projectId),
-            if (!isPreview && editor.canvasLocked && editor.selectedWidgetId != null)
+            if (!isPreview && editor.selectedWidgetId != null)
               Positioned(
                 bottom: 0, left: 0, right: 0,
                 child: PropertiesPanel(projectId: projectId),

@@ -20,7 +20,7 @@ class CanvasWidgetRenderer extends StatelessWidget {
         (p[key] as String?) ?? fb;
     bool bln(String key, [bool fb = false]) =>
         (p[key] as bool?) ?? fb;
-    int num_(String key, [int fb = 0]) => (p[key] as int?) ?? fb;
+    int num_(String key, [int fb = 0]) => (p[key] as num?)?.toInt() ?? fb;
 
     switch (widgetProp.type) {
 
@@ -1028,7 +1028,7 @@ IconData _safeIcon(int? code) {
     0xe047: Icons.pause_rounded, 0xe5db: Icons.refresh_rounded,
     0xe8b5: Icons.send_rounded, 0xe5cf: Icons.chevron_right_rounded,
     0xe5ce: Icons.chevron_left_rounded, 0xe5c5: Icons.arrow_upward_rounded,
-    0xe5db2: Icons.arrow_downward_rounded, 0xe8dc: Icons.star,
+    0xe5db: Icons.arrow_downward_rounded, 0xe8dc: Icons.star,
     0xe0af: Icons.download_rounded, 0xe2c4: Icons.upload_rounded,
     0xe1db: Icons.folder_rounded, 0xe24d: Icons.attach_file_rounded,
     0xe040: Icons.mic_rounded, 0xe04f: Icons.stop_rounded,
@@ -1036,7 +1036,7 @@ IconData _safeIcon(int? code) {
     0xe80d: Icons.location_on_rounded, 0xe1c4: Icons.flight_rounded,
     0xe532: Icons.directions_car_rounded, 0xe1d5: Icons.restaurant_rounded,
     0xe8cc: Icons.shopping_cart_rounded, 0xe8ef: Icons.account_balance_rounded,
-    0xe8b8b: Icons.work_rounded, 0xe80c: Icons.calendar_today_rounded,
+    0xe8f9: Icons.work_rounded, 0xe80c: Icons.calendar_today_rounded,
     0xe192: Icons.bar_chart_rounded, 0xe6df: Icons.pie_chart_rounded,
   };
   return map[code] ?? Icons.widgets_rounded;

@@ -89,8 +89,24 @@ class ExportUtils {
     buffer.writeln();
     buffer.writeln("import 'package:flutter/material.dart';");
     buffer.writeln();
-    buffer.writeln("class ${className}Screen extends StatelessWidget {");
+    buffer.writeln("class ${className}Screen extends StatefulWidget {");
     buffer.writeln("  const ${className}Screen({super.key});");
+    buffer.writeln();
+    buffer.writeln("  @override");
+    buffer.writeln("  State<${className}Screen> createState() => _${className}ScreenState();");
+    buffer.writeln("}");
+    buffer.writeln();
+    buffer.writeln("class _${className}ScreenState extends State<${className}Screen> {");
+
+    // State variables for interactive widgets
+    for (final w in screen.widgets) {
+      if (w.type == 'Switch' || w.type == 'Checkbox') {
+        buffer.writeln("  bool _val_${w.id.replaceAll('-', '_')} = ${w.props['value'] ?? true};");
+      } else if (w.type == 'Slider') {
+        buffer.writeln("  double _val_${w.id.replaceAll('-', '_')} = ${w.props['value'] ?? 0.5};");
+      }
+    }
+
     buffer.writeln();
     buffer.writeln("  @override");
     buffer.writeln("  Widget build(BuildContext context) {");
@@ -179,6 +195,10 @@ ${indent}  textAlign: ${_dartTextAlign(str('textAlign'))},
 ${indent})''';
 
       case 'ElevatedButton':
+        final nav = str('navigateTo');
+        final onPress = nav.isNotEmpty
+            ? "() => Navigator.pushNamed(context, '/${_toSnakeCase(nav)}')"
+            : "() {}";
         return '''ElevatedButton(
 ${indent}  style: ElevatedButton.styleFrom(
 ${indent}    backgroundColor: ${colorVal('color')},
@@ -187,7 +207,7 @@ ${indent}    shape: RoundedRectangleBorder(
 ${indent}      borderRadius: BorderRadius.circular(${dbl('borderRadius', 12)}),
 ${indent}    ),
 ${indent}  ),
-${indent}  onPressed: () {},
+${indent}  onPressed: $onPress,
 ${indent}  child: Text(
 ${indent}    '${_escapeStr(str('text', 'Button'))}',
 ${indent}    style: TextStyle(fontSize: ${dbl('fontSize', 14)}),
@@ -195,6 +215,10 @@ ${indent}  ),
 ${indent})''';
 
       case 'OutlinedButton':
+        final nav = str('navigateTo');
+        final onPress = nav.isNotEmpty
+            ? "() => Navigator.pushNamed(context, '/${_toSnakeCase(nav)}')"
+            : "() {}";
         return '''OutlinedButton(
 ${indent}  style: OutlinedButton.styleFrom(
 ${indent}    foregroundColor: ${colorVal('color')},
@@ -203,21 +227,29 @@ ${indent}    shape: RoundedRectangleBorder(
 ${indent}      borderRadius: BorderRadius.circular(${dbl('borderRadius', 12)}),
 ${indent}    ),
 ${indent}  ),
-${indent}  onPressed: () {},
+${indent}  onPressed: $onPress,
 ${indent}  child: Text('${_escapeStr(str('text', 'Outlined'))}'),
 ${indent})''';
 
       case 'TextButton':
+        final nav = str('navigateTo');
+        final onPress = nav.isNotEmpty
+            ? "() => Navigator.pushNamed(context, '/${_toSnakeCase(nav)}')"
+            : "() {}";
         return '''TextButton(
 ${indent}  style: TextButton.styleFrom(foregroundColor: ${colorVal('color')}),
-${indent}  onPressed: () {},
+${indent}  onPressed: $onPress,
 ${indent}  child: Text('${_escapeStr(str('text', 'Text Button'))}'),
 ${indent})''';
 
       case 'FilledButton':
+        final nav = str('navigateTo');
+        final onPress = nav.isNotEmpty
+            ? "() => Navigator.pushNamed(context, '/${_toSnakeCase(nav)}')"
+            : "() {}";
         return '''FilledButton(
 ${indent}  style: FilledButton.styleFrom(backgroundColor: ${colorVal('color')}),
-${indent}  onPressed: () {},
+${indent}  onPressed: $onPress,
 ${indent}  child: Text('${_escapeStr(str('text', 'Filled'))}'),
 ${indent})''';
 
@@ -263,41 +295,51 @@ ${indent}  ),
 ${indent})''';
 
       case 'Switch':
-        return '''StatefulBuilder(
-${indent}  builder: (context, setState) {
-${indent}    bool _value = ${bln('value', true)};
-${indent}    return Switch(
-${indent}      value: _value,
-${indent}      activeColor: ${colorVal('activeColor')},
-${indent}      onChanged: (v) => setState(() => _value = v),
-${indent}    );
-${indent}  },
+        final varName = '_val_${w.id.replaceAll('-', '_')}';
+        return '''Switch(
+${indent}  value: $varName,
+${indent}  activeColor: ${colorVal('activeColor')},
+${indent}  onChanged: (v) => setState(() => $varName = v),
 ${indent})''';
 
       case 'Checkbox':
-        return '''StatefulBuilder(
-${indent}  builder: (context, setState) {
-${indent}    bool _value = ${bln('value', true)};
-${indent}    return Checkbox(
-${indent}      value: _value,
-${indent}      activeColor: ${colorVal('activeColor')},
-${indent}      onChanged: (v) => setState(() => _value = v ?? false),
-${indent}    );
-${indent}  },
+        final varName = '_val_${w.id.replaceAll('-', '_')}';
+        return '''Checkbox(
+${indent}  value: $varName,
+${indent}  activeColor: ${colorVal('activeColor')},
+${indent}  onChanged: (v) => setState(() => $varName = v ?? false),
 ${indent})''';
 
       case 'Slider':
-        return '''StatefulBuilder(
-${indent}  builder: (context, setState) {
-${indent}    double _value = ${dbl('value', 0.5)};
-${indent}    return Slider(
-${indent}      value: _value,
-${indent}      min: ${dbl('min', 0)},
-${indent}      max: ${dbl('max', 1)},
-${indent}      activeColor: ${colorVal('activeColor')},
-${indent}      onChanged: (v) => setState(() => _value = v),
-${indent}    );
-${indent}  },
+        final varName = '_val_${w.id.replaceAll('-', '_')}';
+        return '''Slider(
+${indent}  value: $varName,
+${indent}  min: ${dbl('min', 0)},
+${indent}  max: ${dbl('max', 1)},
+${indent}  activeColor: ${colorVal('activeColor')},
+${indent}  onChanged: (v) => setState(() => $varName = v),
+${indent})''';
+
+      case 'SegmentedButton':
+        return '''SegmentedButton<int>(
+${indent}  segments: const [
+${indent}    ButtonSegment(value: 0, label: Text('${_escapeStr(str('seg1', 'Day'))}')),
+${indent}    ButtonSegment(value: 1, label: Text('${_escapeStr(str('seg2', 'Week'))}')),
+${indent}    ButtonSegment(value: 2, label: Text('${_escapeStr(str('seg3', 'Month'))}')),
+${indent}  ],
+${indent}  selected: {${(p['selected'] as int?) ?? 0}},
+${indent}  onSelectionChanged: (_) {},
+${indent})''';
+
+      case 'DropdownButton':
+        return '''DropdownButtonFormField<String>(
+${indent}  value: '${_escapeStr(str('value', 'Option 1'))}',
+${indent}  decoration: InputDecoration(
+${indent}    labelText: '${_escapeStr(str('labelText', 'Select'))}',
+${indent}    border: OutlineInputBorder(borderRadius: BorderRadius.circular(${dbl('borderRadius', 8)})),
+${indent}  ),
+${indent}  items: [${str('items', 'Option 1,Option 2').split(',').map((s) => "DropdownMenuItem(value: '${s.trim()}', child: Text('${s.trim()}'))").join(', ')}],
+${indent}  onChanged: (_) {},
 ${indent})''';
 
       case 'LinearProgressIndicator':
@@ -350,6 +392,10 @@ ${indent}  ),
 ${indent})''';
 
       case 'ListTile':
+        final nav = str('navigateTo');
+        final onPress = nav.isNotEmpty
+            ? "() => Navigator.pushNamed(context, '/${_toSnakeCase(nav)}')"
+            : "() {}";
         return '''ListTile(
 ${indent}  tileColor: ${colorVal('color', 0xFFFFFFFF)},
 ${indent}  leading: Icon(IconData(${(p['leadingIcon'] as int?) ?? 0xe318}, fontFamily: 'MaterialIcons')),
@@ -358,7 +404,7 @@ ${indent}    '${_escapeStr(str('title', 'List Item'))}',
 ${indent}    style: TextStyle(color: ${colorVal('textColor', 0xFF000000)}),
 ${indent}  ),
 ${indent}  subtitle: Text('${_escapeStr(str('subtitle', 'Subtitle text'))}'),
-${indent}  onTap: () {},
+${indent}  onTap: $onPress,
 ${indent})''';
 
       case 'AppBar':
