@@ -1025,7 +1025,7 @@ IconData _safeIcon(int? code) {
     0xe7f4: Icons.notifications_rounded, 0xe8b8: Icons.share_rounded,
     0xe2c7: Icons.favorite_rounded, 0xe838: Icons.bookmark_rounded,
     0xe1bc: Icons.camera_rounded, 0xe04b: Icons.play_arrow_rounded,
-    0xe047: Icons.pause_rounded, 0xe5db: Icons.refresh_rounded,
+    0xe047: Icons.pause_rounded, 0xe5d5: Icons.refresh_rounded,
     0xe8b5: Icons.send_rounded, 0xe5cf: Icons.chevron_right_rounded,
     0xe5ce: Icons.chevron_left_rounded, 0xe5c5: Icons.arrow_upward_rounded,
     0xe5db: Icons.arrow_downward_rounded, 0xe8dc: Icons.star,
