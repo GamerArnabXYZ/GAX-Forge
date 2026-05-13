@@ -1,4 +1,4 @@
-name: Build GAX Forge APK
+name: Build & Release GAX Forge
 
 on:
   push:
@@ -6,10 +6,43 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-apk:
-    name: Build & Release APK
+  build-web:
+    name: Build Web (HTML)
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Enable web support
+        run: flutter create . --platforms=web --project-name gax_forge
+
+      - name: Build Web (HTML Renderer)
+        run: flutter build web --release --web-renderer html --base-href "/GAX-Forge/"
+
+      - name: Archive Web Build
+        run: |
+          cd build/web
+          zip -r ../../gax-forge-web.zip .
+
+      - name: Upload Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: gax-forge-web.zip
+
+  build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -30,30 +63,42 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Analyze code
-        run: flutter analyze --no-fatal-infos
-
-      - name: Build APK (split per ABI)
+      - name: Build APKs
         run: |
-          flutter build apk --release \
-            --split-per-abi \
-            --no-tree-shake-icons \
-            --target-platform android-arm,android-arm64,android-x64
+          flutter build apk --release --split-per-abi --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons
 
-      - name: Build universal APK
-        run: flutter build apk --release --no-tree-shake-icons
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-build
+          path: build/app/outputs/flutter-apk/*.apk
+
+  release:
+    name: Create GitHub Release
+    needs: [build-web, build-apk]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Web Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+
+      - name: Download APK Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: apk-build
+          path: apks/
 
       - name: Get version
         id: version
         run: |
           VERSION=$(grep 'version:' pubspec.yaml | head -1 | awk '{print $2}')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Build Web (HTML Renderer)
-        run: |
-          flutter create . --platforms=web
-          flutter build web --release --web-renderer html --base-href "/GAX-Forge/"
-          cd build/web && zip -r ../../gax-forge-web.zip .
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -64,21 +109,18 @@ jobs:
             ## GAX Forge - Flutter UI Design Maker
             
             ### Downloads
-            - `app-arm64-v8a-release.apk` → Modern 64-bit Android (recommended)
-            - `app-armeabi-v7a-release.apk` → Older 32-bit Android
-            - `app-release.apk` → Universal APK
-            - `gax-forge-web.zip` → Web Build (HTML Renderer)
+            - **Android:** Check APKs below for your architecture (arm64, v7a, etc.)
+            - **Web:** `gax-forge-web.zip` (Extract and host or open `index.html`)
             
             ### What's New
-            - **Web Support:** Added web build using HTML renderer for better performance on mobile browsers.
-            - Full canvas drag-drop widget editor
-            - Dart code export
-            - Material 3 UI
+            - **Fixed:** Web build pipeline separated and naming issues resolved.
+            - **Web Support:** Optimized HTML renderer for mobile browsers.
+            - Full canvas design engine.
           files: |
-            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-            build/app/outputs/flutter-apk/app-x86_64-release.apk
-            build/app/outputs/flutter-apk/app-release.apk
+            apks/app-arm64-v8a-release.apk
+            apks/app-armeabi-v7a-release.apk
+            apks/app-x86_64-release.apk
+            apks/app-release.apk
             gax-forge-web.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

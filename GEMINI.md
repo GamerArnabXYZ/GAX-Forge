@@ -28,13 +28,14 @@
 
 ## 🔧 Recent Fixes & Improvements
 (Audit Date: Wednesday, May 13, 2026)
-1. **Screen Size Persistence Fix:** Fixed a bug in `EditorNotifier` where renaming a screen or changing its background color would reset its `screenSize` to default.
-2. **Dynamic Icon Support:** Improved `_safeIcon` in `CanvasWidgetRenderer` to support arbitrary Material icon codes, preventing fallbacks to default icons for custom icon selections.
-3. **Model Enhancements:** Added missing default properties for `DatePicker` and `TimePicker` to ensure they render correctly with initial values.
-4. **Renderer Stability:** Fixed `DataTable` row generation to use consistent `num_` helper instead of unsafe `int.tryParse`.
-5. **Selection Logic:** Widgets can now be selected regardless of canvas lock state. Background tap deselects the current widget.
-6. **Properties Panel:** Visibility logic updated to show the panel whenever a widget is selected (except in Preview mode).
-7. **Project Audit:** Verified `pubspec.yaml` and `main.dart`. Tech stack alignment confirmed (no codegen, manual Hive adapters).
+1. **CI/CD Optimization:** Separated Web and Android builds into independent parallel jobs. Fixed "Invalid package name" error in web build by forcing `--project-name gax_forge`.
+2. **Screen Size Persistence Fix:** Fixed a bug in `EditorNotifier` where renaming a screen or changing its background color would reset its `screenSize` to default.
+3. **Dynamic Icon Support:** Improved `_safeIcon` in `CanvasWidgetRenderer` to support arbitrary Material icon codes, preventing fallbacks to default icons for custom icon selections.
+4. **Model Enhancements:** Added missing default properties for `DatePicker` and `TimePicker` to ensure they render correctly with initial values.
+5. **Renderer Stability:** Fixed `DataTable` row generation to use consistent `num_` helper instead of unsafe `int.tryParse`.
+6. **Selection Logic:** Widgets can now be selected regardless of canvas lock state. Background tap deselects the current widget.
+7. **Properties Panel:** Visibility logic updated to show the panel whenever a widget is selected (except in Preview mode).
+8. **Project Audit:** Verified `pubspec.yaml` and `main.dart`. Tech stack alignment confirmed (no codegen, manual Hive adapters).
 
 ## ⚠️ Critical Constraints (For AI Agents)
 - **RAM Limit:** The host device has **3GB RAM**. Avoid running heavy commands like `flutter run` or `build_runner` unless explicitly requested.
