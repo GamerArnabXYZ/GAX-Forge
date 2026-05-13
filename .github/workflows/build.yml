@@ -27,7 +27,7 @@ jobs:
         run: flutter create . --platforms=web --project-name gax_forge
 
       - name: Build Web (HTML Renderer)
-        run: flutter build web --release --web-renderer html --base-href "/GAX-Forge/"
+        run: flutter build web --release --web-renderer html --base-href "/GAX-Forge/" --no-tree-shake-icons
 
       - name: Archive Web Build
         run: |
