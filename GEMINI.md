@@ -6,11 +6,12 @@
 ## Environment Context
 - **Hardware:** Mobile device, 3GB RAM. No heavy commands.
 - **Language:** All AI responses in **Hinglish**.
-- **Build:** GitHub Actions (Emscripten for Web, Gradle for Android).
+- **Build:** GitHub Actions (HTML Renderer for Web, Gradle for Android).
 -**Note:** Must Push to github and update gemini.md every response.
 
 ## 🛠 Tech Stack
 - **Framework:** Flutter (Material 3)
+- **Platforms:** Android & Web (HTML Renderer)
 - **State Management:** Riverpod (StateNotifier)
 - **Local Storage:** Hive (Manual Adapters)
 - **Target Platform:** Android (Optimized for low-end devices / Termux)
