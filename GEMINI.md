@@ -3,6 +3,12 @@
 ## 🚀 Project Overview
 **GAX Forge** is a professional Flutter UI Design Maker built for mobile devices. It allows users to design, preview, and export Flutter UI code directly from their phones.
 
+## Environment Context
+- **Hardware:** Mobile device, 3GB RAM. No heavy commands.
+- **Language:** All AI responses in **Hinglish**.
+- **Build:** GitHub Actions (Emscripten for Web, Gradle for Android).
+-**Note:** Must Push to github and update gemini.md every response.
+
 ## 🛠 Tech Stack
 - **Framework:** Flutter (Material 3)
 - **State Management:** Riverpod (StateNotifier)
@@ -20,6 +26,7 @@
   - `json_io.dart`: Handles project Import/Export via JSON strings and files.
 
 ## 🔧 Recent Fixes & Improvements
+(Audit Date: Wednesday, May 13, 2026)
 1. **Selection Logic:** Widgets can now be selected regardless of canvas lock state. Background tap deselects the current widget.
 2. **Properties Panel:** Visibility logic updated to show the panel whenever a widget is selected (except in Preview mode).
 3. **Renderer Stability:** Fixed `num_` helper to safely handle `double` to `int` conversions from Hive. Fixed invalid hexadecimal icon codes.
@@ -28,6 +35,7 @@
    - Added state persistence for `Switch`, `Checkbox`, and `Slider` in exported code.
    - Added missing widget generators: `DropdownButton`, `DatePicker`, `TimePicker`, `SegmentedButton`, and `BottomNavigationBar`.
 5. **Bug Fixes:** Resolved color parsing issue during project creation (`int.parse` vs `hex string`).
+6. **Project Audit:** Verified `pubspec.yaml` and `main.dart`. Tech stack alignment confirmed (no codegen, manual Hive adapters).
 
 ## ⚠️ Critical Constraints (For AI Agents)
 - **RAM Limit:** The host device has **3GB RAM**. Avoid running heavy commands like `flutter run` or `build_runner` unless explicitly requested.
