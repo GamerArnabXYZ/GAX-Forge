@@ -575,7 +575,7 @@ class CanvasWidgetRenderer extends StatelessWidget {
               columns: str('columns', 'Name,Age,City').split(',')
                   .map((c) => DataColumn(label: Text(c.trim(), style: TextStyle(fontWeight: FontWeight.bold, color: col('textColor', 0xFF212121)))))
                   .toList(),
-              rows: List.generate(int.tryParse(str('rows', '3')) ?? 3, (i) =>
+              rows: List.generate(num_('rows', 3), (i) =>
                 DataRow(cells: str('columns', 'Name,Age,City').split(',')
                     .map((_) => DataCell(Text('Data ${i + 1}', style: TextStyle(color: col('textColor', 0xFF212121)))))
                     .toList())),
@@ -1011,6 +1011,8 @@ class _LayoutHint extends StatelessWidget {
 
 // ── Icon map (tree-shake safe) ──────────────────
 IconData _safeIcon(int? code) {
+  if (code == null || code <= 0) return Icons.widgets_rounded;
+
   const map = <int, IconData>{
     0xe318: Icons.star_rounded, 0xe145: Icons.add_rounded,
     0xe3af: Icons.image_rounded, 0xe88a: Icons.home_rounded,
@@ -1039,5 +1041,9 @@ IconData _safeIcon(int? code) {
     0xe8f9: Icons.work_rounded, 0xe80c: Icons.calendar_today_rounded,
     0xe192: Icons.bar_chart_rounded, 0xe6df: Icons.pie_chart_rounded,
   };
-  return map[code] ?? Icons.widgets_rounded;
+
+  if (map.containsKey(code)) return map[code]!;
+
+  // Fallback: Create IconData directly from code if it looks like a valid Material Icon
+  return IconData(code, fontFamily: 'MaterialIcons');
 }

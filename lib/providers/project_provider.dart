@@ -153,13 +153,7 @@ class EditorNotifier extends StateNotifier<EditorState> {
 
   void renameScreen(int index, String name) {
     final screens = List<CanvasScreen>.from(state.project.screens);
-    final old = screens[index];
-    screens[index] = CanvasScreen(
-      id: old.id,
-      name: name,
-      widgets: old.widgets,
-      backgroundColor: old.backgroundColor,
-    );
+    screens[index] = screens[index].copyWith(name: name);
     state = state.copyWith(project: state.project.copyWith(screens: screens));
   }
 
@@ -285,13 +279,8 @@ class EditorNotifier extends StateNotifier<EditorState> {
 
   void setCanvasBackground(int color) {
     final screens = List<CanvasScreen>.from(state.project.screens);
-    final active = screens[state.activeScreenIndex];
-    screens[state.activeScreenIndex] = CanvasScreen(
-      id: active.id,
-      name: active.name,
-      widgets: active.widgets,
-      backgroundColor: color,
-    );
+    screens[state.activeScreenIndex] =
+        screens[state.activeScreenIndex].copyWith(backgroundColor: color);
     state = state.copyWith(project: state.project.copyWith(screens: screens));
   }
 

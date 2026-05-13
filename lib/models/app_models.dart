@@ -219,11 +219,13 @@ class WidgetProperty extends HiveObject {
         return {
           'label': 'Pick Date', 'color': 0xFF6750A4,
           'borderRadius': 8.0, 'filled': true,
+          'initialDate': DateTime.now().toIso8601String(),
         };
       case 'TimePicker':
         return {
           'label': 'Pick Time', 'color': 0xFF6750A4,
           'borderRadius': 8.0,
+          'initialTime': '12:00',
         };
 
       // ── Display ──
