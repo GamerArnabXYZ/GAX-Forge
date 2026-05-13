@@ -28,7 +28,7 @@
 
 ## 🔧 Recent Fixes & Improvements
 (Audit Date: Wednesday, May 13, 2026)
-1. **CI/CD Optimization:** Separated Web and Android builds into independent parallel jobs. Fixed "Invalid package name" error and "Icon Tree Shaking" error in web build by using `--project-name` and `--no-tree-shake-icons`.
+1. **CI/CD Optimization:** Added Auto-Deployment to GitHub Pages with `permissions: contents: write`. Separated Web and Android builds. Fixed naming and icon tree-shaking issues.
 2. **Screen Size Persistence Fix:** Fixed a bug in `EditorNotifier` where renaming a screen or changing its background color would reset its `screenSize` to default.
 3. **Dynamic Icon Support:** Improved `_safeIcon` in `CanvasWidgetRenderer` to support arbitrary Material icon codes, preventing fallbacks to default icons for custom icon selections.
 4. **Model Enhancements:** Added missing default properties for `DatePicker` and `TimePicker` to ensure they render correctly with initial values.
